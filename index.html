@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal de Recrutamento | Model UN Academy Luanda Chapter</title>
+    <meta name="description" content="Portal oficial de recrutamento da Model UN Academy Angola - Luanda Chapter.">
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+</head>
+<body>
+    <div class="site-bg" aria-hidden="true">
+        <span class="bg-shape bg-shape-gold"></span>
+        <span class="bg-shape bg-shape-blue"></span>
+    </div>
+
+    <main class="shell">
+        <header class="hero">
+            <div class="hero-media">
+                <img src="imagens/fundomuna.png" alt="Logótipo da Model UN Academy" class="logo">
+            </div>
+            <div class="hero-content">
+                <p class="eyebrow">Portal de Recrutamento</p>
+                <h1>MODEL UN ACADEMY</h1>
+                <h2>LUANDA CHAPTER</h2>
+                <p class="hero-text">
+                    Portal oficial para candidatura às equipas e cargos disponíveis da Model UN Academy Angola - Luanda Chapter.
+                </p>
+            </div>
+        </header>
+
+        <section class="intro-section" aria-labelledby="intro-title">
+            <div>
+                <p class="eyebrow">Faça parte da equipa</p>
+                <h3 id="intro-title">Uma oportunidade para crescer, contribuir e representar com responsabilidade.</h3>
+            </div>
+            <p>
+                A Model UN Academy Angola está a recrutar jovens interessados em apoiar o desenvolvimento da organização.
+                Não é necessário ter experiência profissional extensa para todos os cargos. Valorizamos compromisso,
+                responsabilidade, vontade de aprender, comunicação, iniciativa e espírito de equipa.
+            </p>
+        </section>
+
+        <section class="portal" aria-label="Formulário de candidatura">
+            <div class="progress-area">
+                <div class="progress-top">
+                    <span>Etapa <strong id="currentStepText">1</strong> de 5</span>
+                    <span id="currentStepName">Informações</span>
+                </div>
+                <div class="progress-bar" aria-hidden="true">
+                    <div class="progress" id="progress"></div>
+                </div>
+                <ol class="steps" aria-label="Etapas do formulário">
+                    <li class="step active"><span>1</span><small>Informações</small></li>
+                    <li class="step"><span>2</span><small>Cargo</small></li>
+                    <li class="step"><span>3</span><small>Motivação</small></li>
+                    <li class="step"><span>4</span><small>Documentos</small></li>
+                    <li class="step"><span>5</span><small>Revisão</small></li>
+                </ol>
+            </div>
+
+            <form id="applicationForm" novalidate>
+                <section class="page active" data-step-name="Informações">
+                    <div class="section-heading">
+                        <p class="eyebrow">Dados pessoais</p>
+                        <h3>Informações do candidato</h3>
+                        <p>Preencha os dados principais para que a equipa possa analisar e contactar a sua candidatura.</p>
+                    </div>
+
+                    <div class="grid">
+                        <div class="field">
+                            <label for="fullName">Nome completo <span>obrigatório</span></label>
+                            <input id="fullName" name="fullName" type="text" placeholder="Digite o seu nome completo" autocomplete="name" required>
+                            <small class="field-error"></small>
+                        </div>
+                        <div class="field">
+                            <label for="age">Idade <span>obrigatório</span></label>
+                            <input id="age" name="age" type="number" min="14" max="35" placeholder="Ex.: 19" required>
+                            <small class="field-error"></small>
+                        </div>
+                        <div class="field">
+                            <label for="city">Cidade <span>obrigatório</span></label>
+                            <input id="city" name="city" type="text" placeholder="Ex.: Luanda" required>
+                            <small class="field-error"></small>
+                        </div>
+                        <div class="field">
+                            <label for="province">Província <span>obrigatório</span></label>
+                            <input id="province" name="province" type="text" placeholder="Ex.: Luanda" required>
+                            <small class="field-error"></small>
+                        </div>
+                        <div class="field field-wide">
+                            <label for="institution">Escola / Universidade / Profissão <span>obrigatório</span></label>
+                            <input id="institution" name="institution" type="text" placeholder="Indique onde estuda, trabalha ou a sua ocupação atual" required>
+                            <small class="field-error"></small>
+                        </div>
+                        <div class="field">
+                            <label for="email">E-mail <span>obrigatório</span></label>
+                            <input id="email" name="email" type="email" placeholder="exemplo@email.com" autocomplete="email" required>
+                            <small class="field-error"></small>
+                        </div>
+                        <div class="field">
+                            <label for="phone">Telefone <span>obrigatório</span></label>
+                            <input id="phone" name="phone" type="tel" inputmode="numeric" placeholder="9XXXXXXXX" autocomplete="tel" required>
+                            <small class="field-error"></small>
+                        </div>
+                        <div class="field">
+                            <label for="linkedin">LinkedIn <span>opcional</span></label>
+                            <input id="linkedin" name="linkedin" type="url" placeholder="https://linkedin.com/in/..." autocomplete="url">
+                            <small class="field-error"></small>
+                        </div>
+                        <div class="field">
+                            <label for="socials">Redes sociais <span>opcional</span></label>
+                            <input id="socials" name="socials" type="text" placeholder="@usuario ou link do perfil">
+                            <small class="field-error"></small>
+                        </div>
+                    </div>
+
+                    <div class="actions actions-end">
+                        <button type="button" class="btn btn-primary" data-next>Próximo <i class="fa-solid fa-arrow-right"></i></button>
+                    </div>
+                </section>
+
+                <section class="page" data-step-name="Cargo">
+                    <div class="section-heading">
+                        <p class="eyebrow">Área de atuação</p>
+                        <h3>Escolha o cargo</h3>
+                        <p>Selecione uma vaga para consultar a descrição, requisitos e documentos solicitados.</p>
+                    </div>
+
+                    <div id="jobError" class="form-error" role="alert"></div>
+                    <div class="job-grid" id="jobGrid"></div>
+                    <div id="jobDetails" class="job-details" aria-live="polite"></div>
+
+                    <div class="actions">
+                        <button type="button" class="btn btn-secondary" data-back><i class="fa-solid fa-arrow-left"></i> Voltar</button>
+                        <button type="button" class="btn btn-primary" data-next>Próximo <i class="fa-solid fa-arrow-right"></i></button>
+                    </div>
+                </section>
+
+                <section class="page" data-step-name="Motivação">
+                    <div class="section-heading">
+                        <p class="eyebrow">Motivação</p>
+                        <h3>Conte-nos por que deseja integrar a equipa</h3>
+                        <p>Responda com objetividade. Não procuramos respostas perfeitas, mas clareza, compromisso e vontade de aprender.</p>
+                    </div>
+
+                    <div class="field">
+                        <label for="motivation">Por que gostaria de fazer parte da Model UN Academy Angola? <span>obrigatório</span></label>
+                        <textarea id="motivation" name="motivation" maxlength="700" placeholder="Explique a sua motivação em poucas linhas." required></textarea>
+                        <div class="field-meta"><small class="field-error"></small><small class="counter" data-for="motivation"></small></div>
+                    </div>
+                    <div class="field">
+                        <label for="fit">Por que acha que é a pessoa certa para este cargo? <span>obrigatório</span></label>
+                        <textarea id="fit" name="fit" maxlength="700" placeholder="Relacione as suas competências, disponibilidade e vontade de contribuir." required></textarea>
+                        <div class="field-meta"><small class="field-error"></small><small class="counter" data-for="fit"></small></div>
+                    </div>
+                    <div class="field">
+                        <label for="schoolPitch">Como convenceria um diretor de escola a aderir à Model UN Academy? <span>obrigatório</span></label>
+                        <textarea id="schoolPitch" name="schoolPitch" maxlength="500" placeholder="Apresente uma abordagem simples, respeitosa e convincente." required></textarea>
+                        <div class="field-meta"><small class="field-error"></small><small class="counter" data-for="schoolPitch"></small></div>
+                    </div>
+                    <div class="field">
+                        <label for="challenge">Qual considera ser o maior desafio dos jovens angolanos no acesso às oportunidades internacionais? <span>obrigatório</span></label>
+                        <textarea id="challenge" name="challenge" maxlength="500" placeholder="Partilhe a sua visão sobre o tema." required></textarea>
+                        <div class="field-meta"><small class="field-error"></small><small class="counter" data-for="challenge"></small></div>
+                    </div>
+
+                    <div class="grid compact">
+                        <div class="field">
+                            <label for="communication">Competências de comunicação <span>obrigatório</span></label>
+                            <select id="communication" name="communication" required>
+                                <option value="">Selecione uma opção</option>
+                                <option>Excelente</option>
+                                <option>Muito boa</option>
+                                <option>Boa</option>
+                                <option>Em desenvolvimento</option>
+                            </select>
+                            <small class="field-error"></small>
+                        </div>
+                        <div class="field">
+                            <label for="availability">Consegue participar regularmente das reuniões? <span>obrigatório</span></label>
+                            <select id="availability" name="availability" required>
+                                <option value="">Selecione uma opção</option>
+                                <option>Sim</option>
+                                <option>Não</option>
+                                <option>Depende do horário</option>
+                            </select>
+                            <small class="field-error"></small>
+                        </div>
+                    </div>
+
+                    <div class="actions">
+                        <button type="button" class="btn btn-secondary" data-back><i class="fa-solid fa-arrow-left"></i> Voltar</button>
+                        <button type="button" class="btn btn-primary" data-next>Próximo <i class="fa-solid fa-arrow-right"></i></button>
+                    </div>
+                </section>
+
+                <section class="page" data-step-name="Documentos">
+                    <div class="section-heading">
+                        <p class="eyebrow">Documentos</p>
+                        <h3>Anexos da candidatura</h3>
+                        <p>Carregue apenas os documentos solicitados para o cargo selecionado. Os ficheiros ficam no navegador até existir integração com backend.</p>
+                    </div>
+
+                    <div id="documentsError" class="form-error" role="alert"></div>
+                    <div id="documents" class="documents-list"></div>
+
+                    <div class="actions">
+                        <button type="button" class="btn btn-secondary" data-back><i class="fa-solid fa-arrow-left"></i> Voltar</button>
+                        <button type="button" class="btn btn-primary" data-next>Próximo <i class="fa-solid fa-arrow-right"></i></button>
+                    </div>
+                </section>
+
+                <section class="page" data-step-name="Revisão">
+                    <div class="section-heading">
+                        <p class="eyebrow">Revisão e envio</p>
+                        <h3>Reveja a candidatura</h3>
+                        <p>Confirme os dados antes de preparar o envio. A submissão real depende de um endpoint configurado.</p>
+                    </div>
+
+                    <div id="submissionNotice" class="notice warning">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                        <p>
+                            O portal ainda não tem um destino de envio configurado. A candidatura será validada e preparada,
+                            mas não será marcada como enviada até existir integração com backend, formulário externo ou serviço de e-mail.
+                        </p>
+                    </div>
+                    <div id="review" class="review"></div>
+                    <div id="submitMessage" class="submit-message" role="status"></div>
+
+                    <div class="actions">
+                        <button type="button" class="btn btn-secondary" data-back><i class="fa-solid fa-arrow-left"></i> Voltar</button>
+                        <button type="submit" class="btn btn-primary"><i class="fa-solid fa-paper-plane"></i> Preparar envio</button>
+                    </div>
+                </section>
+            </form>
+        </section>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>
