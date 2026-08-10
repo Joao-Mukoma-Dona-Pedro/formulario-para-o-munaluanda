@@ -1,62 +1,10 @@
-const SUBMISSION_ENDPOINT = "";
+const SUBMISSION_ENDPOINT = "/api/applications";
 const ORGANIZATION_NAME = "Model UN Academy Luanda Chapter";
 const MAX_FILE_SIZE_MB = 5;
 const ACCEPTED_EXTENSIONS = ["pdf", "doc", "docx", "jpg", "jpeg", "png"];
 const LUANDA_REQUIREMENT_TEXT = "Esta função exige disponibilidade presencial em Luanda. Candidatos que não estejam em Luanda ou que não tenham disponibilidade para atuar presencialmente em Luanda não são elegíveis para esta posição.";
 const LUANDA_INELIGIBLE_TEXT = "Obrigado pelo seu interesse. No entanto, esta posição exige atuação presencial em Luanda, portanto você não é elegível para este cargo.";
-const SUBMISSION_DB_NAME = "muna_recruitment_submissions";
-const SUBMISSION_DB_VERSION = 1;
-const SUBMISSION_LOG_KEY = "muna_submission_log";
-
-const routingConfig = {
-    recipients: {
-        joaoPedro: {
-            name: "João Pedro",
-            role: "Vice-diretor do Capítulo",
-            email: "CONFIGURAR_EMAIL_JOAO_PEDRO"
-        },
-        felisbertaPanzo: {
-            name: "Felisberta Panzo",
-            role: "Diretora do Capítulo",
-            email: "felisbertapanzo36@gmail.com"
-        },
-        natashaSara: {
-            name: "Natasha Sara / Natasha Samango",
-            role: "Diretora de Relações Externas",
-            email: "natashasarahars@gmail.com"
-        },
-        simaoCoimbra: {
-            name: "Simão Coimbra",
-            role: "Responsável pela Comunicação",
-            email: "engenheirocoimbra4@gmail.com"
-        },
-        guilhermeZaza: {
-            name: "Guilherme Zaza",
-            role: "Diretor de Imagem",
-            email: "guilhermeza80@gmail.com"
-        },
-        tobiaBernardo: {
-            name: "Tóbia Bernardo",
-            role: "Responsável pelos Eventos",
-            email: "toldia_bernardo@icloud.com"
-        }
-    },
-    globalRecipients: ["joaoPedro"],
-    jobRecipients: {
-        secretario: ["felisbertaPanzo"],
-        escolas: ["natashaSara"],
-        universidades: ["natashaSara"],
-        parcerias: ["natashaSara"],
-        diaspora: ["natashaSara"],
-        provincial: ["natashaSara"],
-        rp: ["natashaSara"],
-        designer: ["guilhermeZaza"],
-        fotografo: ["guilhermeZaza"],
-        videografo: ["guilhermeZaza"],
-        redator: ["simaoCoimbra", "guilhermeZaza"]
-    },
-    eventRelatedJobs: []
-};
+const routingCache = {};
 
 const jobs = {
     escolas: {
@@ -379,7 +327,9 @@ const jobs = {
 const state = {
     currentPage: 0,
     selectedJob: "",
-    files: {}
+    files: {},
+    submitted: false,
+    routingByJob: {}
 };
 
 const pages = [...document.querySelectorAll(".page")];
@@ -396,7 +346,6 @@ const documentsError = document.getElementById("documentsError");
 const review = document.getElementById("review");
 const submitMessage = document.getElementById("submitMessage");
 const downloadDossierPdfButton = document.getElementById("downloadDossierPdf");
-const retryPendingSubmissionsButton = document.getElementById("retryPendingSubmissions");
 
 function init() {
     renderJobs();
@@ -426,7 +375,7 @@ function renderJobs() {
     });
 }
 
-function selectJob(jobKey) {
+async function selectJob(jobKey) {
     state.selectedJob = jobKey;
     state.files = {};
     localStorage.setItem("muna_selected_job", jobKey);
@@ -439,6 +388,7 @@ function selectJob(jobKey) {
     renderJobDetails();
     renderDocuments();
     saveDraft();
+    await loadRoutingForJob(jobKey);
 }
 
 function renderJobDetails() {
@@ -479,7 +429,7 @@ function renderJobDetails() {
                 </div>
                 <div>
                     <h5>Documentos necessários</h5>
-                    <ul>${job.documents.map(doc => `<li>${doc.name}${doc.required ? "" : " (opcional)"}</li>`).join("")}</ul>
+                    <ul>${getDocumentsForJob(job).map(doc => `<li>${doc.name}${doc.required ? "" : " (opcional)"}</li>`).join("")}</ul>
                 </div>
             </div>
         </article>
@@ -514,7 +464,7 @@ function renderDocuments() {
     }
 
     const job = jobs[state.selectedJob];
-    documents.innerHTML = job.documents.map((doc) => {
+    documents.innerHTML = getDocumentsForJob(job).map((doc) => {
         const file = state.files[doc.id];
         const loaded = Boolean(file);
         return `
@@ -606,11 +556,11 @@ function handleFile(docId, file) {
 
 function bindNavigation() {
     document.querySelectorAll("[data-next]").forEach((button) => {
-        button.addEventListener("click", () => {
+        button.addEventListener("click", async () => {
             if (!validateCurrentPage()) return;
             if (state.currentPage < pages.length - 1) {
                 state.currentPage += 1;
-                if (state.currentPage === pages.length - 1) renderReview();
+                if (state.currentPage === pages.length - 1) await renderReview();
                 updateStep();
             }
         });
@@ -664,6 +614,26 @@ function validateCurrentPage() {
 
 function selectedJobRequiresLuanda() {
     return Boolean(state.selectedJob && jobs[state.selectedJob].requiresLuanda);
+}
+
+function getDocumentsForJob(job) {
+    const baseDocs = job.documents || [];
+    const generalDocs = [
+        {
+            id: "coverLetter",
+            name: "Carta de motivacao",
+            reason: "Opcionalmente anexe uma carta de motivacao em ficheiro, alem das respostas preenchidas no formulario.",
+            required: false
+        },
+        {
+            id: "otherDocuments",
+            name: "Outros documentos",
+            reason: "Anexe certificados, comprovativos ou materiais adicionais relevantes para a candidatura.",
+            required: false
+        }
+    ];
+    const existingIds = new Set(baseDocs.map((doc) => doc.id));
+    return [...baseDocs, ...generalDocs.filter((doc) => !existingIds.has(doc.id))];
 }
 
 function validateLuandaAvailability() {
@@ -729,7 +699,7 @@ function validateDocuments() {
         return false;
     }
 
-    const missing = jobs[state.selectedJob].documents.filter((doc) => doc.required && !state.files[doc.id]);
+    const missing = getDocumentsForJob(jobs[state.selectedJob]).filter((doc) => doc.required && !state.files[doc.id]);
     if (missing.length) {
         documentsError.textContent = `Carregue os documentos obrigatórios: ${missing.map(doc => doc.name).join(", ")}.`;
         return false;
@@ -767,13 +737,23 @@ function bindDossierActions() {
             downloadDossierPdf(buildApplicationRecord());
         });
     }
-
-    if (retryPendingSubmissionsButton) {
-        retryPendingSubmissionsButton.addEventListener("click", retryPendingSubmissions);
-    }
 }
 
-function renderReview() {
+async function loadRoutingForJob(jobKey) {
+    if (!jobKey || state.routingByJob[jobKey]) return state.routingByJob[jobKey] || [];
+    try {
+        const response = await fetch(`/api/routing/${encodeURIComponent(jobKey)}`);
+        if (!response.ok) throw new Error("Nao foi possivel carregar os responsaveis.");
+        const data = await response.json();
+        state.routingByJob[jobKey] = data.recipients || [];
+    } catch {
+        state.routingByJob[jobKey] = [];
+    }
+    return state.routingByJob[jobKey];
+}
+
+async function renderReview() {
+    await loadRoutingForJob(state.selectedJob);
     const record = buildApplicationRecord();
     const data = record.data;
     const selected = jobs[state.selectedJob];
@@ -805,31 +785,21 @@ function renderReview() {
 
 async function handleSubmit(event) {
     event.preventDefault();
+    if (state.submitted) return;
     submitMessage.className = "submit-message";
     submitMessage.innerHTML = "";
 
     const allValid = pages.every((page) => validateFields(page)) && state.selectedJob && validateLuandaAvailability() && validateDocuments();
     if (!allValid) {
         submitMessage.classList.add("show", "error");
-        submitMessage.innerHTML = `<i class="fa-solid fa-circle-xmark"></i><p>Existem campos por corrigir antes de preparar a candidatura.</p>`;
+        submitMessage.innerHTML = `<i class="fa-solid fa-circle-xmark"></i><p>Existem campos por corrigir antes de enviar a candidatura.</p>`;
         return;
     }
 
     const button = form.querySelector("button[type='submit']");
     button.disabled = true;
+    button.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> A enviar`;
     const record = buildApplicationRecord();
-
-    if (!SUBMISSION_ENDPOINT) {
-        await storePendingSubmission(record, getCurrentFileEntries(), "Endpoint de submissão não configurado.");
-        logSubmission(record, "pendente", "Endpoint de submissão não configurado.");
-        submitMessage.classList.add("show", "error");
-        submitMessage.innerHTML = `
-            <i class="fa-solid fa-circle-info"></i>
-            <p>A candidatura foi guardada como pendente no navegador porque falta configurar um endpoint de submissão. O dossiê pode ser baixado agora e reenviado posteriormente.</p>
-        `;
-        button.disabled = false;
-        return;
-    }
 
     try {
         const payload = buildPayload(record, getCurrentFileEntries());
@@ -837,22 +807,26 @@ async function handleSubmit(event) {
             method: "POST",
             body: payload
         });
-        if (!response.ok) throw new Error("Falha no envio");
-        logSubmission(record, "enviado");
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok || !result.ok) throw new Error(result.error || "Falha no envio");
+        state.submitted = true;
         submitMessage.classList.add("show", "success");
-        submitMessage.innerHTML = `<i class="fa-solid fa-circle-check"></i><p>Candidatura enviada com sucesso para os responsáveis configurados.</p>`;
+        submitMessage.innerHTML = `
+            <i class="fa-solid fa-circle-check"></i>
+            <p><strong>✅ Candidatura enviada com sucesso!</strong><br>A sua candidatura foi recebida pela Model UN Academy Luanda Chapter. A equipa responsável analisará as informações submetidas.</p>
+        `;
         localStorage.removeItem("muna_draft");
         localStorage.removeItem("muna_selected_job");
     } catch (error) {
-        await storePendingSubmission(record, getCurrentFileEntries(), error.message);
-        logSubmission(record, "pendente", error.message);
         submitMessage.classList.add("show", "error");
-        submitMessage.innerHTML = `<i class="fa-solid fa-circle-xmark"></i><p>Não foi possível enviar a candidatura agora. Ela foi guardada como pendente e pode ser reenviada posteriormente.</p>`;
-    } finally {
+        submitMessage.innerHTML = `<i class="fa-solid fa-circle-xmark"></i><p>Não foi possível enviar a candidatura neste momento. Verifique a sua conexão e tente novamente.</p>`;
         button.disabled = false;
+        button.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Enviar candidatura`;
+        return;
+    } finally {
+        if (!state.submitted) button.disabled = false;
     }
 }
-
 function buildPayload(record, fileEntries = getCurrentFileEntries()) {
     const payload = new FormData();
     Object.entries(record.data).forEach(([key, value]) => payload.append(key, value));
@@ -870,22 +844,15 @@ function buildPayload(record, fileEntries = getCurrentFileEntries()) {
 }
 
 function getRoutingForJob(jobKey) {
-    const recipientIds = [
-        ...routingConfig.globalRecipients,
-        ...(routingConfig.jobRecipients[jobKey] || []),
-        ...(routingConfig.eventRelatedJobs.includes(jobKey) ? ["tobiaBernardo"] : [])
-    ];
-    const uniqueRecipientIds = [...new Set(recipientIds)];
-    return uniqueRecipientIds.map((id) => ({ id, ...routingConfig.recipients[id] })).filter((recipient) => recipient.email);
+    return state.routingByJob[jobKey] || [];
 }
-
 function buildApplicationRecord() {
     const data = getFormData();
     const selected = jobs[state.selectedJob];
     const now = new Date();
     const recipients = getRoutingForJob(state.selectedJob);
     const answers = buildDossierRows(data, selected);
-    const documentsList = selected.documents.map((doc) => {
+    const documentsList = getDocumentsForJob(selected).map((doc) => {
         const file = state.files[doc.id];
         return {
             id: doc.id,
@@ -983,121 +950,6 @@ function buildEmailText(record) {
 
 function getCurrentFileEntries() {
     return Object.entries(state.files).map(([docId, file]) => ({ docId, file }));
-}
-
-function logSubmission(record, status, error = "") {
-    const logs = JSON.parse(localStorage.getItem(SUBMISSION_LOG_KEY) || "[]");
-    logs.unshift({
-        id: record.id,
-        job: record.job.title,
-        recipients: record.routing.recipientEmails,
-        submittedAt: record.submittedAt,
-        status,
-        error
-    });
-    localStorage.setItem(SUBMISSION_LOG_KEY, JSON.stringify(logs.slice(0, 50)));
-}
-
-function openSubmissionDb() {
-    return new Promise((resolve, reject) => {
-        const request = indexedDB.open(SUBMISSION_DB_NAME, SUBMISSION_DB_VERSION);
-        request.onupgradeneeded = () => {
-            const db = request.result;
-            if (!db.objectStoreNames.contains("pending")) {
-                db.createObjectStore("pending", { keyPath: "id" });
-            }
-        };
-        request.onsuccess = () => resolve(request.result);
-        request.onerror = () => reject(request.error);
-    });
-}
-
-async function storePendingSubmission(record, fileEntries, error = "") {
-    const db = await openSubmissionDb();
-    return new Promise((resolve, reject) => {
-        const transaction = db.transaction("pending", "readwrite");
-        transaction.objectStore("pending").put({
-            id: record.id,
-            record,
-            files: fileEntries,
-            status: "pendente",
-            error,
-            updatedAt: new Date().toISOString()
-        });
-        transaction.oncomplete = () => {
-            db.close();
-            resolve();
-        };
-        transaction.onerror = () => {
-            db.close();
-            reject(transaction.error);
-        };
-    });
-}
-
-async function getPendingSubmissions() {
-    const db = await openSubmissionDb();
-    return new Promise((resolve, reject) => {
-        const transaction = db.transaction("pending", "readonly");
-        const request = transaction.objectStore("pending").getAll();
-        request.onsuccess = () => resolve(request.result);
-        request.onerror = () => reject(request.error);
-        transaction.oncomplete = () => db.close();
-    });
-}
-
-async function deletePendingSubmission(id) {
-    const db = await openSubmissionDb();
-    return new Promise((resolve, reject) => {
-        const transaction = db.transaction("pending", "readwrite");
-        transaction.objectStore("pending").delete(id);
-        transaction.oncomplete = () => {
-            db.close();
-            resolve();
-        };
-        transaction.onerror = () => {
-            db.close();
-            reject(transaction.error);
-        };
-    });
-}
-
-async function retryPendingSubmissions() {
-    submitMessage.className = "submit-message show";
-    if (!SUBMISSION_ENDPOINT) {
-        submitMessage.classList.add("error");
-        submitMessage.innerHTML = `<i class="fa-solid fa-circle-info"></i><p>Configure primeiro o endpoint de submissão para reenviar candidaturas pendentes.</p>`;
-        return;
-    }
-
-    const pending = await getPendingSubmissions();
-    if (!pending.length) {
-        submitMessage.classList.add("success");
-        submitMessage.innerHTML = `<i class="fa-solid fa-circle-check"></i><p>Não há candidaturas pendentes para reenviar.</p>`;
-        return;
-    }
-
-    let sent = 0;
-    for (const item of pending) {
-        try {
-            const response = await fetch(SUBMISSION_ENDPOINT, {
-                method: "POST",
-                body: buildPayload(item.record, item.files)
-            });
-            if (!response.ok) throw new Error("Falha no reenvio");
-            await deletePendingSubmission(item.id);
-            logSubmission(item.record, "reenviado");
-            sent += 1;
-        } catch (error) {
-            await storePendingSubmission(item.record, item.files, error.message);
-            logSubmission(item.record, "pendente", error.message);
-        }
-    }
-
-    submitMessage.classList.add(sent === pending.length ? "success" : "error");
-    submitMessage.innerHTML = sent === pending.length
-        ? `<i class="fa-solid fa-circle-check"></i><p>${sent} candidatura(s) reenviada(s) com sucesso.</p>`
-        : `<i class="fa-solid fa-circle-xmark"></i><p>${sent} candidatura(s) reenviada(s). As restantes continuam guardadas como pendentes.</p>`;
 }
 
 function downloadDossierPdf(record) {

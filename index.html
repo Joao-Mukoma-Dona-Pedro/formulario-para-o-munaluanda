@@ -206,7 +206,7 @@
                     <div class="section-heading">
                         <p class="eyebrow">Documentos</p>
                         <h3>Anexos da candidatura</h3>
-                        <p>Carregue apenas os documentos solicitados para o cargo selecionado. Os ficheiros ficam no navegador até existir integração com backend.</p>
+                        <p>Carregue apenas os documentos solicitados para o cargo selecionado. Os ficheiros serao enviados de forma segura com a candidatura.</p>
                     </div>
 
                     <div id="documentsError" class="form-error" role="alert"></div>
@@ -222,26 +222,17 @@
                     <div class="section-heading">
                         <p class="eyebrow">Revisão e envio</p>
                         <h3>Reveja a candidatura</h3>
-                        <p>Confirme os dados antes de preparar o envio. A submissão real depende de um endpoint configurado.</p>
-                    </div>
-
-                    <div id="submissionNotice" class="notice warning">
-                        <i class="fa-solid fa-triangle-exclamation"></i>
-                        <p>
-                            O portal ainda não tem um destino de envio configurado. A candidatura será validada e preparada,
-                            mas não será marcada como enviada até existir integração com backend, formulário externo ou serviço de e-mail.
-                        </p>
+                        <p>Confirme os dados antes de enviar a candidatura para a equipa responsavel.</p>
                     </div>
                     <div id="review" class="review"></div>
                     <div class="dossier-actions">
                         <button type="button" class="btn btn-secondary" id="downloadDossierPdf"><i class="fa-solid fa-download"></i> Baixar dossiê completo</button>
-                        <button type="button" class="btn btn-secondary" id="retryPendingSubmissions"><i class="fa-solid fa-rotate-right"></i> Reenviar candidaturas pendentes</button>
                     </div>
                     <div id="submitMessage" class="submit-message" role="status"></div>
 
                     <div class="actions">
                         <button type="button" class="btn btn-secondary" data-back><i class="fa-solid fa-arrow-left"></i> Voltar</button>
-                        <button type="submit" class="btn btn-primary"><i class="fa-solid fa-paper-plane"></i> Preparar envio</button>
+                        <button type="submit" class="btn btn-primary"><i class="fa-solid fa-paper-plane"></i> Enviar candidatura</button>
                     </div>
                 </section>
             </form>

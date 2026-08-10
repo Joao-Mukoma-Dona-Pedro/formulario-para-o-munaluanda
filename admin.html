@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel Administrativo | Model UN Academy Luanda Chapter</title>
+    <link rel="stylesheet" href="admin.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+</head>
+<body>
+    <header class="topbar">
+        <div>
+            <p>Model UN Academy Luanda Chapter</p>
+            <h1>Painel de candidaturas</h1>
+        </div>
+        <button id="refresh" class="icon-btn" title="Atualizar"><i class="fa-solid fa-rotate-right"></i></button>
+    </header>
+
+    <main class="layout">
+        <section class="filters">
+            <input id="adminToken" type="password" placeholder="Token administrativo">
+            <input id="search" type="search" placeholder="Pesquisar por nome">
+            <select id="jobFilter">
+                <option value="">Todos os cargos</option>
+            </select>
+            <select id="stateFilter">
+                <option value="">Todos os estados</option>
+            </select>
+        </section>
+
+        <section class="content">
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Candidato</th>
+                            <th>Cargo</th>
+                            <th>Estado</th>
+                            <th>E-mail</th>
+                            <th>Data</th>
+                        </tr>
+                    </thead>
+                    <tbody id="applicationsTable"></tbody>
+                </table>
+            </div>
+            <aside id="details" class="details">
+                <p class="empty">Selecione uma candidatura para ver os detalhes.</p>
+            </aside>
+        </section>
+    </main>
+
+    <div id="toast" class="toast" role="status"></div>
+    <script src="admin.js"></script>
+</body>
+</html>

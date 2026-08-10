@@ -1,0 +1,50 @@
+{
+  "recipients": {
+    "joaoPedro": {
+      "name": "Joao Pedro",
+      "role": "Vice-diretor do Capitulo",
+      "emailEnv": "EMAIL_JOAO_PEDRO"
+    },
+    "felisbertaPanzo": {
+      "name": "Felisberta Panzo",
+      "role": "Diretora do Capitulo",
+      "email": "felisbertapanzo36@gmail.com"
+    },
+    "natashaSara": {
+      "name": "Natasha Sara / Natasha Samango",
+      "role": "Diretora de Relacoes Externas",
+      "email": "natashasarahars@gmail.com"
+    },
+    "simaoCoimbra": {
+      "name": "Simao Coimbra",
+      "role": "Responsavel pela Comunicacao",
+      "email": "engenheirocoimbra4@gmail.com"
+    },
+    "guilhermeZaza": {
+      "name": "Guilherme Zaza",
+      "role": "Diretor de Imagem",
+      "email": "guilhermeza80@gmail.com"
+    },
+    "tobiaBernardo": {
+      "name": "Tobia Bernardo",
+      "role": "Responsavel pelos Eventos",
+      "email": "toldia_bernardo@icloud.com"
+    }
+  },
+  "globalRecipients": ["joaoPedro"],
+  "jobRecipients": {
+    "secretario": ["felisbertaPanzo"],
+    "escolas": ["natashaSara"],
+    "universidades": ["natashaSara"],
+    "parcerias": ["natashaSara"],
+    "diaspora": ["natashaSara"],
+    "provincial": ["natashaSara"],
+    "rp": ["natashaSara"],
+    "designer": ["guilhermeZaza"],
+    "fotografo": ["guilhermeZaza"],
+    "videografo": ["guilhermeZaza"],
+    "redator": ["simaoCoimbra", "guilhermeZaza"],
+    "eventos": ["tobiaBernardo"]
+  },
+  "eventRelatedJobs": ["eventos"]
+}
