@@ -1,6 +1,8 @@
 const SUBMISSION_ENDPOINT = "";
 const MAX_FILE_SIZE_MB = 5;
 const ACCEPTED_EXTENSIONS = ["pdf", "doc", "docx", "jpg", "jpeg", "png"];
+const LUANDA_REQUIREMENT_TEXT = "Esta função exige disponibilidade presencial em Luanda. Candidatos que não estejam em Luanda ou que não tenham disponibilidade para atuar presencialmente em Luanda não são elegíveis para esta posição.";
+const LUANDA_INELIGIBLE_TEXT = "Obrigado pelo seu interesse. No entanto, esta posição exige atuação presencial em Luanda, portanto você não é elegível para este cargo.";
 
 const jobs = {
     escolas: {
@@ -131,6 +133,7 @@ const jobs = {
     designer: {
         title: "Designer Gráfico",
         icon: "fa-palette",
+        requiresLuanda: true,
         short: "Cria materiais visuais alinhados à identidade institucional.",
         description: "Apoia a produção de cartazes, publicações digitais, apresentações e peças gráficas para comunicação da organização.",
         essential: [
@@ -162,6 +165,7 @@ const jobs = {
     redator: {
         title: "Redator de Conteúdo",
         icon: "fa-pen-nib",
+        requiresLuanda: true,
         short: "Produz textos claros para comunicação institucional e educativa.",
         description: "Apoia a escrita de publicações, artigos curtos, legendas, comunicados e conteúdos informativos da organização.",
         essential: [
@@ -193,6 +197,7 @@ const jobs = {
     fotografo: {
         title: "Fotógrafo",
         icon: "fa-camera",
+        requiresLuanda: true,
         short: "Regista eventos, atividades e momentos institucionais.",
         description: "Apoia a captação de fotografias para eventos, redes sociais e memória institucional da organização.",
         essential: [
@@ -224,6 +229,7 @@ const jobs = {
     videografo: {
         title: "Videógrafo",
         icon: "fa-video",
+        requiresLuanda: true,
         short: "Produz e apoia conteúdos audiovisuais da organização.",
         description: "Apoia a gravação e edição de vídeos para eventos, redes sociais e campanhas institucionais.",
         essential: [
@@ -351,6 +357,7 @@ function renderJobs() {
         <button type="button" class="job-card" data-job="${key}" aria-pressed="false">
             <i class="fa-solid ${job.icon}" aria-hidden="true"></i>
             <strong>${job.title}</strong>
+            ${job.requiresLuanda ? `<span class="location-badge"><i class="fa-solid fa-location-dot" aria-hidden="true"></i> Base: Luanda - Presencial</span>` : ""}
             <small>${job.short}</small>
         </button>
     `).join("");
@@ -388,6 +395,22 @@ function renderJobDetails() {
         <article class="details-card">
             <h4>${job.title}</h4>
             <p>${job.description}</p>
+            ${job.requiresLuanda ? `
+                <div class="location-note">
+                    <strong><i class="fa-solid fa-location-dot" aria-hidden="true"></i> Requisito de localização</strong>
+                    <p>${LUANDA_REQUIREMENT_TEXT}</p>
+                </div>
+                <div class="field location-question" id="luandaAvailabilityField">
+                    <label for="luandaAvailability">Você reside ou tem disponibilidade para atuar presencialmente em Luanda? <span>obrigatório</span></label>
+                    <select id="luandaAvailability" name="luandaAvailability" required>
+                        <option value="">Selecione uma opção</option>
+                        <option value="Sim">Sim</option>
+                        <option value="Não">Não</option>
+                    </select>
+                    <small class="field-error"></small>
+                </div>
+                <div class="notice error eligibility-message" id="luandaEligibilityMessage" role="alert"></div>
+            ` : ""}
             <div class="detail-columns">
                 <div>
                     <h5>Requisitos essenciais</h5>
@@ -404,6 +427,17 @@ function renderJobDetails() {
             </div>
         </article>
     `;
+
+    const luandaAvailability = document.getElementById("luandaAvailability");
+    if (luandaAvailability) {
+        luandaAvailability.value = getFormData().luandaAvailability || "";
+        luandaAvailability.addEventListener("input", () => {
+            validateLuandaAvailability();
+            saveDraft();
+        });
+        luandaAvailability.addEventListener("blur", validateLuandaAvailability);
+        validateLuandaAvailability();
+    }
 }
 
 function renderDocuments() {
@@ -555,6 +589,10 @@ function validateCurrentPage() {
         valid = false;
     }
 
+    if (state.currentPage === 1 && state.selectedJob) {
+        valid = validateLuandaAvailability() && valid;
+    }
+
     if (state.currentPage === 3) {
         valid = validateDocuments() && valid;
     }
@@ -565,6 +603,38 @@ function validateCurrentPage() {
     }
 
     return valid;
+}
+
+function selectedJobRequiresLuanda() {
+    return Boolean(state.selectedJob && jobs[state.selectedJob].requiresLuanda);
+}
+
+function validateLuandaAvailability() {
+    if (!selectedJobRequiresLuanda()) return true;
+
+    const field = document.getElementById("luandaAvailability");
+    const wrapper = document.getElementById("luandaAvailabilityField");
+    const error = wrapper ? wrapper.querySelector(".field-error") : null;
+    const message = document.getElementById("luandaEligibilityMessage");
+    if (!field) return true;
+
+    let errorText = "";
+    if (!field.value) {
+        errorText = "Este campo é obrigatório.";
+    } else if (field.value === "Não") {
+        errorText = LUANDA_INELIGIBLE_TEXT;
+    }
+
+    if (wrapper) wrapper.classList.toggle("invalid", Boolean(errorText));
+    if (error) error.textContent = field.value === "Não" ? "" : errorText;
+    if (message) {
+        message.classList.toggle("show", field.value === "Não");
+        message.innerHTML = field.value === "Não"
+            ? `<i class="fa-solid fa-circle-info"></i><p>${LUANDA_INELIGIBLE_TEXT}</p>`
+            : "";
+    }
+
+    return !errorText;
 }
 
 function validateFields(scope) {
@@ -650,6 +720,7 @@ function renderReview() {
             <div class="review-item"><strong>E-mail</strong><span>${escapeHtml(data.email)}</span></div>
             <div class="review-item"><strong>Telefone</strong><span>${escapeHtml(data.phone)}</span></div>
             <div class="review-item full"><strong>Escola / Universidade / Profissão</strong><span>${escapeHtml(data.institution)}</span></div>
+            ${selected.requiresLuanda ? `<div class="review-item full"><strong>Disponibilidade presencial em Luanda</strong><span>${escapeHtml(data.luandaAvailability)}</span></div>` : ""}
             <div class="review-item full"><strong>Documentos</strong><span>${uploadedDocs}</span></div>
             <div class="review-item full"><strong>Motivação</strong><span>${escapeHtml(data.motivation)}</span></div>
         </div>
@@ -661,7 +732,7 @@ async function handleSubmit(event) {
     submitMessage.className = "submit-message";
     submitMessage.innerHTML = "";
 
-    const allValid = pages.every((page) => validateFields(page)) && state.selectedJob && validateDocuments();
+    const allValid = pages.every((page) => validateFields(page)) && state.selectedJob && validateLuandaAvailability() && validateDocuments();
     if (!allValid) {
         submitMessage.classList.add("show", "error");
         submitMessage.innerHTML = `<i class="fa-solid fa-circle-xmark"></i><p>Existem campos por corrigir antes de preparar a candidatura.</p>`;
@@ -721,9 +792,10 @@ function saveDraft() {
 
 function restoreDraft() {
     const rawDraft = localStorage.getItem("muna_draft");
+    let draft = {};
     if (rawDraft) {
         try {
-            const draft = JSON.parse(rawDraft);
+            draft = JSON.parse(rawDraft);
             Object.entries(draft).forEach(([name, value]) => {
                 const field = form.elements[name];
                 if (field && field.type !== "file") field.value = value;
@@ -736,6 +808,11 @@ function restoreDraft() {
     const savedJob = localStorage.getItem("muna_selected_job");
     if (savedJob && jobs[savedJob]) {
         selectJob(savedJob);
+        const luandaAvailability = document.getElementById("luandaAvailability");
+        if (luandaAvailability && draft.luandaAvailability) {
+            luandaAvailability.value = draft.luandaAvailability;
+            validateLuandaAvailability();
+        }
     }
 }
 
