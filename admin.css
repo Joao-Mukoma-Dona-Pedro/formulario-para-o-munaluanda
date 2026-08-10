@@ -54,6 +54,11 @@ select {
     font-size: 1.55rem;
 }
 
+.topbar-actions {
+    display: flex;
+    gap: 10px;
+}
+
 .layout {
     padding: 24px 28px;
 }

@@ -189,6 +189,11 @@ app.post("/api/admin/applications/:id/resend-email", requireAdmin, async (req, r
   res.json({ ok: result.status === "sent", emailStatus: record.emailStatus, emailError: record.emailError });
 });
 
+app.post("/api/admin/test-email", requireAdmin, async (_req, res) => {
+  const result = await sendSmtpTestEmail();
+  res.status(result.ok ? 200 : 400).json(result);
+});
+
 app.get("/api/download/:token", async (req, res) => {
   const payload = verifyDownloadToken(req.params.token);
   if (!payload) return res.status(403).send("Link inválido ou expirado.");
@@ -408,6 +413,30 @@ async function sendApplicationEmail(record) {
     return { status: EMAIL_DRY_RUN ? "dry_run" : "sent" };
   } catch (error) {
     return { status: "failed", error: error.message };
+  }
+}
+
+async function sendSmtpTestEmail() {
+  try {
+    const to = process.env.EMAIL_JOAO_PEDRO;
+    if (!to) throw new Error("EMAIL_JOAO_PEDRO não configurado.");
+    const transporter = createTransporter();
+    if (!transporter) throw new Error("SMTP não configurado. Defina SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD e EMAIL_FROM.");
+    const info = await transporter.sendMail({
+      from: process.env.EMAIL_FROM,
+      to,
+      subject: `Teste SMTP | ${ORGANIZATION_NAME}`,
+      text: `Teste de SMTP do sistema de candidaturas da ${ORGANIZATION_NAME}.`,
+      html: `<p>Teste de SMTP do sistema de candidaturas da <strong>${escapeHtml(ORGANIZATION_NAME)}</strong>.</p>`
+    });
+    return {
+      ok: true,
+      status: EMAIL_DRY_RUN ? "dry_run" : "sent",
+      accepted: info.accepted || [],
+      rejected: info.rejected || []
+    };
+  } catch (error) {
+    return { ok: false, status: "failed", error: error.message };
   }
 }
 

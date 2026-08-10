@@ -5,6 +5,7 @@ const stateFilter = document.getElementById("stateFilter");
 const table = document.getElementById("applicationsTable");
 const details = document.getElementById("details");
 const refreshButton = document.getElementById("refresh");
+const testEmailButton = document.getElementById("testEmail");
 const toast = document.getElementById("toast");
 
 let applications = [];
@@ -20,6 +21,7 @@ tokenInput.value = localStorage.getItem("muna_admin_token") || "";
     });
 });
 refreshButton.addEventListener("click", loadApplications);
+testEmailButton.addEventListener("click", testEmail);
 
 async function api(path, options = {}) {
     const headers = {
@@ -48,6 +50,19 @@ async function loadApplications() {
         states = data.states || [];
         renderFilters();
         renderTable();
+    } catch (error) {
+        showToast(error.message);
+    }
+}
+
+async function testEmail() {
+    if (!tokenInput.value) {
+        showToast("Introduza o token administrativo.");
+        return;
+    }
+    try {
+        const result = await api("/api/admin/test-email", { method: "POST" });
+        showToast(result.status === "dry_run" ? "Teste SMTP executado em modo dry-run." : "E-mail de teste enviado.");
     } catch (error) {
         showToast(error.message);
     }
