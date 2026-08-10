@@ -658,6 +658,13 @@ select:focus {
     padding: 22px;
 }
 
+.dossier-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 18px;
+}
+
 .review-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -883,6 +890,10 @@ select:focus {
 
     .actions {
         flex-direction: column-reverse;
+    }
+
+    .dossier-actions {
+        flex-direction: column;
     }
 
     .actions-end {

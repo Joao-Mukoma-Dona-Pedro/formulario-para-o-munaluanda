@@ -1,8 +1,62 @@
 const SUBMISSION_ENDPOINT = "";
+const ORGANIZATION_NAME = "Model UN Academy Luanda Chapter";
 const MAX_FILE_SIZE_MB = 5;
 const ACCEPTED_EXTENSIONS = ["pdf", "doc", "docx", "jpg", "jpeg", "png"];
 const LUANDA_REQUIREMENT_TEXT = "Esta função exige disponibilidade presencial em Luanda. Candidatos que não estejam em Luanda ou que não tenham disponibilidade para atuar presencialmente em Luanda não são elegíveis para esta posição.";
 const LUANDA_INELIGIBLE_TEXT = "Obrigado pelo seu interesse. No entanto, esta posição exige atuação presencial em Luanda, portanto você não é elegível para este cargo.";
+const SUBMISSION_DB_NAME = "muna_recruitment_submissions";
+const SUBMISSION_DB_VERSION = 1;
+const SUBMISSION_LOG_KEY = "muna_submission_log";
+
+const routingConfig = {
+    recipients: {
+        joaoPedro: {
+            name: "João Pedro",
+            role: "Vice-diretor do Capítulo",
+            email: "CONFIGURAR_EMAIL_JOAO_PEDRO"
+        },
+        felisbertaPanzo: {
+            name: "Felisberta Panzo",
+            role: "Diretora do Capítulo",
+            email: "felisbertapanzo36@gmail.com"
+        },
+        natashaSara: {
+            name: "Natasha Sara / Natasha Samango",
+            role: "Diretora de Relações Externas",
+            email: "natashasarahars@gmail.com"
+        },
+        simaoCoimbra: {
+            name: "Simão Coimbra",
+            role: "Responsável pela Comunicação",
+            email: "engenheirocoimbra4@gmail.com"
+        },
+        guilhermeZaza: {
+            name: "Guilherme Zaza",
+            role: "Diretor de Imagem",
+            email: "guilhermeza80@gmail.com"
+        },
+        tobiaBernardo: {
+            name: "Tóbia Bernardo",
+            role: "Responsável pelos Eventos",
+            email: "toldia_bernardo@icloud.com"
+        }
+    },
+    globalRecipients: ["joaoPedro"],
+    jobRecipients: {
+        secretario: ["felisbertaPanzo"],
+        escolas: ["natashaSara"],
+        universidades: ["natashaSara"],
+        parcerias: ["natashaSara"],
+        diaspora: ["natashaSara"],
+        provincial: ["natashaSara"],
+        rp: ["natashaSara"],
+        designer: ["guilhermeZaza"],
+        fotografo: ["guilhermeZaza"],
+        videografo: ["guilhermeZaza"],
+        redator: ["simaoCoimbra", "guilhermeZaza"]
+    },
+    eventRelatedJobs: []
+};
 
 const jobs = {
     escolas: {
@@ -341,12 +395,15 @@ const documents = document.getElementById("documents");
 const documentsError = document.getElementById("documentsError");
 const review = document.getElementById("review");
 const submitMessage = document.getElementById("submitMessage");
+const downloadDossierPdfButton = document.getElementById("downloadDossierPdf");
+const retryPendingSubmissionsButton = document.getElementById("retryPendingSubmissions");
 
 function init() {
     renderJobs();
     bindNavigation();
     bindFieldValidation();
     bindCounters();
+    bindDossierActions();
     restoreDraft();
     updateStep();
     renderDocuments();
@@ -703,13 +760,29 @@ function bindCounters() {
     });
 }
 
+function bindDossierActions() {
+    if (downloadDossierPdfButton) {
+        downloadDossierPdfButton.addEventListener("click", () => {
+            if (!state.selectedJob) return;
+            downloadDossierPdf(buildApplicationRecord());
+        });
+    }
+
+    if (retryPendingSubmissionsButton) {
+        retryPendingSubmissionsButton.addEventListener("click", retryPendingSubmissions);
+    }
+}
+
 function renderReview() {
-    const data = getFormData();
+    const record = buildApplicationRecord();
+    const data = record.data;
     const selected = jobs[state.selectedJob];
-    const uploadedDocs = selected.documents.map((doc) => {
-        const file = state.files[doc.id];
-        return `${escapeHtml(doc.name)}: ${file ? escapeHtml(file.name) : "não carregado"}`;
-    }).join("<br>");
+    const recipients = record.routing.recipients
+        .map((recipient) => `${escapeHtml(recipient.name)} - ${escapeHtml(recipient.role)}`)
+        .join("<br>");
+    const uploadedDocs = record.documents.map((doc) => (
+        `${escapeHtml(doc.name)}: ${doc.fileName ? `${escapeHtml(doc.fileName)} - Ver/Baixar após envio seguro` : "não carregado"}`
+    )).join("<br>");
 
     review.innerHTML = `
         <div class="review-grid">
@@ -721,8 +794,11 @@ function renderReview() {
             <div class="review-item"><strong>Telefone</strong><span>${escapeHtml(data.phone)}</span></div>
             <div class="review-item full"><strong>Escola / Universidade / Profissão</strong><span>${escapeHtml(data.institution)}</span></div>
             ${selected.requiresLuanda ? `<div class="review-item full"><strong>Disponibilidade presencial em Luanda</strong><span>${escapeHtml(data.luandaAvailability)}</span></div>` : ""}
+            <div class="review-item full"><strong>Destinatários</strong><span>${recipients}</span></div>
+            <div class="review-item full"><strong>Assunto do e-mail</strong><span>${escapeHtml(record.emailSubject)}</span></div>
             <div class="review-item full"><strong>Documentos</strong><span>${uploadedDocs}</span></div>
             <div class="review-item full"><strong>Motivação</strong><span>${escapeHtml(data.motivation)}</span></div>
+            <div class="review-item full"><strong>Resumo do dossiê</strong><span>O e-mail incluirá tabela profissional com respostas, documentos, data/hora e opção de baixar o dossiê completo.</span></div>
         </div>
     `;
 }
@@ -741,44 +817,361 @@ async function handleSubmit(event) {
 
     const button = form.querySelector("button[type='submit']");
     button.disabled = true;
+    const record = buildApplicationRecord();
 
     if (!SUBMISSION_ENDPOINT) {
+        await storePendingSubmission(record, getCurrentFileEntries(), "Endpoint de submissão não configurado.");
+        logSubmission(record, "pendente", "Endpoint de submissão não configurado.");
         submitMessage.classList.add("show", "error");
         submitMessage.innerHTML = `
             <i class="fa-solid fa-circle-info"></i>
-            <p>A candidatura está validada no navegador, mas ainda não foi enviada porque falta configurar um endpoint de submissão. Consulte o README para ligar o portal a um backend ou serviço de formulário.</p>
+            <p>A candidatura foi guardada como pendente no navegador porque falta configurar um endpoint de submissão. O dossiê pode ser baixado agora e reenviado posteriormente.</p>
         `;
         button.disabled = false;
         return;
     }
 
     try {
-        const payload = buildPayload();
+        const payload = buildPayload(record, getCurrentFileEntries());
         const response = await fetch(SUBMISSION_ENDPOINT, {
             method: "POST",
             body: payload
         });
         if (!response.ok) throw new Error("Falha no envio");
+        logSubmission(record, "enviado");
         submitMessage.classList.add("show", "success");
-        submitMessage.innerHTML = `<i class="fa-solid fa-circle-check"></i><p>Candidatura enviada com sucesso.</p>`;
+        submitMessage.innerHTML = `<i class="fa-solid fa-circle-check"></i><p>Candidatura enviada com sucesso para os responsáveis configurados.</p>`;
         localStorage.removeItem("muna_draft");
         localStorage.removeItem("muna_selected_job");
     } catch (error) {
+        await storePendingSubmission(record, getCurrentFileEntries(), error.message);
+        logSubmission(record, "pendente", error.message);
         submitMessage.classList.add("show", "error");
-        submitMessage.innerHTML = `<i class="fa-solid fa-circle-xmark"></i><p>Não foi possível enviar a candidatura. Tente novamente ou contacte a equipa responsável.</p>`;
+        submitMessage.innerHTML = `<i class="fa-solid fa-circle-xmark"></i><p>Não foi possível enviar a candidatura agora. Ela foi guardada como pendente e pode ser reenviada posteriormente.</p>`;
     } finally {
         button.disabled = false;
     }
 }
 
-function buildPayload() {
+function buildPayload(record, fileEntries = getCurrentFileEntries()) {
     const payload = new FormData();
-    const data = getFormData();
-    Object.entries(data).forEach(([key, value]) => payload.append(key, value));
-    payload.append("selectedJob", state.selectedJob);
-    payload.append("selectedJobTitle", jobs[state.selectedJob].title);
-    Object.entries(state.files).forEach(([docId, file]) => payload.append(`document_${docId}`, file));
+    Object.entries(record.data).forEach(([key, value]) => payload.append(key, value));
+    payload.append("applicationId", record.id);
+    payload.append("submittedAt", record.submittedAt);
+    payload.append("selectedJob", record.job.key);
+    payload.append("selectedJobTitle", record.job.title);
+    payload.append("emailSubject", record.emailSubject);
+    payload.append("recipients", JSON.stringify(record.routing.recipients));
+    payload.append("dossier", JSON.stringify(record));
+    payload.append("emailHtml", record.emailHtml);
+    payload.append("emailText", record.emailText);
+    fileEntries.forEach(({ docId, file }) => payload.append(`document_${docId}`, file));
     return payload;
+}
+
+function getRoutingForJob(jobKey) {
+    const recipientIds = [
+        ...routingConfig.globalRecipients,
+        ...(routingConfig.jobRecipients[jobKey] || []),
+        ...(routingConfig.eventRelatedJobs.includes(jobKey) ? ["tobiaBernardo"] : [])
+    ];
+    const uniqueRecipientIds = [...new Set(recipientIds)];
+    return uniqueRecipientIds.map((id) => ({ id, ...routingConfig.recipients[id] })).filter((recipient) => recipient.email);
+}
+
+function buildApplicationRecord() {
+    const data = getFormData();
+    const selected = jobs[state.selectedJob];
+    const now = new Date();
+    const recipients = getRoutingForJob(state.selectedJob);
+    const answers = buildDossierRows(data, selected);
+    const documentsList = selected.documents.map((doc) => {
+        const file = state.files[doc.id];
+        return {
+            id: doc.id,
+            name: doc.name,
+            required: doc.required,
+            fileName: file ? file.name : "",
+            fileSize: file ? file.size : 0,
+            status: file ? "Carregado para envio seguro" : "Não carregado",
+            action: file ? "Ver/Baixar após armazenamento seguro no servidor" : "Pendente"
+        };
+    });
+    const record = {
+        id: `MUNA-${now.getTime()}`,
+        organization: ORGANIZATION_NAME,
+        submittedAt: now.toISOString(),
+        submittedAtDisplay: now.toLocaleString("pt-PT", { dateStyle: "medium", timeStyle: "short" }),
+        job: {
+            key: state.selectedJob,
+            title: selected.title,
+            requiresLuanda: Boolean(selected.requiresLuanda)
+        },
+        data,
+        answers,
+        documents: documentsList,
+        routing: {
+            recipients,
+            recipientEmails: recipients.map((recipient) => recipient.email)
+        },
+        emailSubject: `Nova candidatura — ${selected.title} | ${ORGANIZATION_NAME}`
+    };
+    record.emailHtml = buildEmailHtml(record);
+    record.emailText = buildEmailText(record);
+    return record;
+}
+
+function buildDossierRows(data, selected) {
+    const rows = [
+        ["Nome completo", data.fullName],
+        ["Cargo", selected.title],
+        ["E-mail", data.email],
+        ["Telefone/WhatsApp", data.phone],
+        ["Localização", `${data.city || ""}, ${data.province || ""}`.replace(/^,\s*|,\s*$/g, "")],
+        ["Idade", data.age],
+        ["Escola / Universidade / Profissão", data.institution],
+        ["LinkedIn", data.linkedin || "Não informado"],
+        ["Redes sociais", data.socials || "Não informado"],
+        ["Motivação", data.motivation],
+        ["Adequação ao cargo", data.fit],
+        ["Experiência / abordagem com escolas", data.schoolPitch],
+        ["Visão sobre desafios dos jovens", data.challenge],
+        ["Competências de comunicação", data.communication],
+        ["Disponibilidade", data.availability],
+        ["Informações adicionais", "Não informado"]
+    ];
+
+    if (selected.requiresLuanda) {
+        rows.splice(5, 0, ["Disponibilidade presencial em Luanda", data.luandaAvailability]);
+    }
+
+    return rows.map(([label, answer]) => ({ label, answer: answer || "Não informado" }));
+}
+
+function buildEmailHtml(record) {
+    const rows = record.answers.map((row) => `
+        <tr>
+            <th>${escapeHtml(row.label)}</th>
+            <td>${escapeHtml(row.answer).replaceAll("\n", "<br>")}</td>
+        </tr>
+    `).join("");
+    const docs = record.documents.map((doc) => `
+        <li><strong>${escapeHtml(doc.name)}</strong> → ${escapeHtml(doc.action)}${doc.fileName ? ` (${escapeHtml(doc.fileName)})` : ""}</li>
+    `).join("");
+
+    return `
+        <div style="font-family: Arial, sans-serif; color: #172033;">
+            <h2 style="margin-bottom: 4px;">Nova candidatura recebida</h2>
+            <p style="margin-top: 0;">${escapeHtml(ORGANIZATION_NAME)}</p>
+            <table style="border-collapse: collapse; width: 100%; margin: 18px 0;">
+                <tbody>${rows}</tbody>
+            </table>
+            <h3>📎 DOCUMENTOS DA CANDIDATURA</h3>
+            <ul>${docs}</ul>
+            <p><strong>Formulário completo</strong> → Ver candidatura no sistema</p>
+            <p><strong>📥 Baixar dossiê completo</strong> → Disponível no painel/endpoint de candidaturas.</p>
+            <p><strong>Data e hora da candidatura:</strong> ${escapeHtml(record.submittedAtDisplay)}</p>
+        </div>
+    `;
+}
+
+function buildEmailText(record) {
+    const rows = record.answers.map((row) => `${row.label}: ${row.answer}`).join("\n");
+    const docs = record.documents.map((doc) => `${doc.name}: ${doc.action}${doc.fileName ? ` (${doc.fileName})` : ""}`).join("\n");
+    return `${ORGANIZATION_NAME}\n${record.emailSubject}\n\n${rows}\n\nDOCUMENTOS DA CANDIDATURA\n${docs}\n\nData e hora: ${record.submittedAtDisplay}`;
+}
+
+function getCurrentFileEntries() {
+    return Object.entries(state.files).map(([docId, file]) => ({ docId, file }));
+}
+
+function logSubmission(record, status, error = "") {
+    const logs = JSON.parse(localStorage.getItem(SUBMISSION_LOG_KEY) || "[]");
+    logs.unshift({
+        id: record.id,
+        job: record.job.title,
+        recipients: record.routing.recipientEmails,
+        submittedAt: record.submittedAt,
+        status,
+        error
+    });
+    localStorage.setItem(SUBMISSION_LOG_KEY, JSON.stringify(logs.slice(0, 50)));
+}
+
+function openSubmissionDb() {
+    return new Promise((resolve, reject) => {
+        const request = indexedDB.open(SUBMISSION_DB_NAME, SUBMISSION_DB_VERSION);
+        request.onupgradeneeded = () => {
+            const db = request.result;
+            if (!db.objectStoreNames.contains("pending")) {
+                db.createObjectStore("pending", { keyPath: "id" });
+            }
+        };
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+    });
+}
+
+async function storePendingSubmission(record, fileEntries, error = "") {
+    const db = await openSubmissionDb();
+    return new Promise((resolve, reject) => {
+        const transaction = db.transaction("pending", "readwrite");
+        transaction.objectStore("pending").put({
+            id: record.id,
+            record,
+            files: fileEntries,
+            status: "pendente",
+            error,
+            updatedAt: new Date().toISOString()
+        });
+        transaction.oncomplete = () => {
+            db.close();
+            resolve();
+        };
+        transaction.onerror = () => {
+            db.close();
+            reject(transaction.error);
+        };
+    });
+}
+
+async function getPendingSubmissions() {
+    const db = await openSubmissionDb();
+    return new Promise((resolve, reject) => {
+        const transaction = db.transaction("pending", "readonly");
+        const request = transaction.objectStore("pending").getAll();
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+        transaction.oncomplete = () => db.close();
+    });
+}
+
+async function deletePendingSubmission(id) {
+    const db = await openSubmissionDb();
+    return new Promise((resolve, reject) => {
+        const transaction = db.transaction("pending", "readwrite");
+        transaction.objectStore("pending").delete(id);
+        transaction.oncomplete = () => {
+            db.close();
+            resolve();
+        };
+        transaction.onerror = () => {
+            db.close();
+            reject(transaction.error);
+        };
+    });
+}
+
+async function retryPendingSubmissions() {
+    submitMessage.className = "submit-message show";
+    if (!SUBMISSION_ENDPOINT) {
+        submitMessage.classList.add("error");
+        submitMessage.innerHTML = `<i class="fa-solid fa-circle-info"></i><p>Configure primeiro o endpoint de submissão para reenviar candidaturas pendentes.</p>`;
+        return;
+    }
+
+    const pending = await getPendingSubmissions();
+    if (!pending.length) {
+        submitMessage.classList.add("success");
+        submitMessage.innerHTML = `<i class="fa-solid fa-circle-check"></i><p>Não há candidaturas pendentes para reenviar.</p>`;
+        return;
+    }
+
+    let sent = 0;
+    for (const item of pending) {
+        try {
+            const response = await fetch(SUBMISSION_ENDPOINT, {
+                method: "POST",
+                body: buildPayload(item.record, item.files)
+            });
+            if (!response.ok) throw new Error("Falha no reenvio");
+            await deletePendingSubmission(item.id);
+            logSubmission(item.record, "reenviado");
+            sent += 1;
+        } catch (error) {
+            await storePendingSubmission(item.record, item.files, error.message);
+            logSubmission(item.record, "pendente", error.message);
+        }
+    }
+
+    submitMessage.classList.add(sent === pending.length ? "success" : "error");
+    submitMessage.innerHTML = sent === pending.length
+        ? `<i class="fa-solid fa-circle-check"></i><p>${sent} candidatura(s) reenviada(s) com sucesso.</p>`
+        : `<i class="fa-solid fa-circle-xmark"></i><p>${sent} candidatura(s) reenviada(s). As restantes continuam guardadas como pendentes.</p>`;
+}
+
+function downloadDossierPdf(record) {
+    const pdf = createSimplePdf(record);
+    const blob = new Blob([pdf], { type: "application/pdf" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `dossie-${record.job.key}-${record.id}.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(link.href);
+}
+
+function createSimplePdf(record) {
+    const lines = [
+        ORGANIZATION_NAME,
+        "Dossiê completo da candidatura",
+        record.emailSubject,
+        `Data e hora: ${record.submittedAtDisplay}`,
+        "",
+        ...record.answers.map((row) => `${row.label}: ${row.answer}`),
+        "",
+        "DOCUMENTOS DA CANDIDATURA",
+        ...record.documents.map((doc) => `${doc.name}: ${doc.fileName || "Não carregado"} - ${doc.action}`),
+        "",
+        `Destinatários: ${record.routing.recipientEmails.join(", ")}`
+    ];
+    return buildPdfFromLines(lines);
+}
+
+function buildPdfFromLines(lines) {
+    const objects = [];
+    const escapedLines = lines.flatMap((line) => wrapPdfText(String(line), 96));
+    const text = escapedLines.map((line, index) => `BT /F1 10 Tf 50 ${790 - (index * 14)} Td (${escapePdfText(line)}) Tj ET`).join("\n");
+    objects.push("<< /Type /Catalog /Pages 2 0 R >>");
+    objects.push("<< /Type /Pages /Kids [3 0 R] /Count 1 >>");
+    objects.push("<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>");
+    objects.push("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>");
+    objects.push(`<< /Length ${text.length} >>\nstream\n${text}\nendstream`);
+    let pdf = "%PDF-1.4\n";
+    const offsets = [0];
+    objects.forEach((object, index) => {
+        offsets.push(pdf.length);
+        pdf += `${index + 1} 0 obj\n${object}\nendobj\n`;
+    });
+    const xref = pdf.length;
+    pdf += `xref\n0 ${objects.length + 1}\n0000000000 65535 f \n`;
+    offsets.slice(1).forEach((offset) => {
+        pdf += `${String(offset).padStart(10, "0")} 00000 n \n`;
+    });
+    pdf += `trailer << /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`;
+    return pdf;
+}
+
+function wrapPdfText(text, size) {
+    if (!text) return [""];
+    const words = text.replace(/\s+/g, " ").split(" ");
+    const lines = [];
+    let line = "";
+    words.forEach((word) => {
+        if (`${line} ${word}`.trim().length > size) {
+            lines.push(line);
+            line = word;
+        } else {
+            line = `${line} ${word}`.trim();
+        }
+    });
+    if (line) lines.push(line);
+    return lines;
+}
+
+function escapePdfText(value) {
+    return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[()\\]/g, "\\$&");
 }
 
 function getFormData() {
