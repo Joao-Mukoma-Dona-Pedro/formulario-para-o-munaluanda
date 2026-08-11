@@ -60,12 +60,14 @@ app.use("/api/index.js", (_req, res) => res.status(404).send("Not found"));
 app.use(express.static(__dirname, { extensions: ["html"] }));
 
 app.get("/api/health", (_req, res) => {
+  const productionChecks = getProductionChecks();
   res.json({
     ok: true,
     storage: USE_BLOB_STORAGE ? "vercel-blob-private" : (IS_PRODUCTION_RUNTIME ? "not-configured" : "local-filesystem"),
     productionReady: hasProductionSecrets(),
     emailConfigured: isEmailConfigured(),
-    dryRun: EMAIL_DRY_RUN
+    dryRun: EMAIL_DRY_RUN,
+    checks: productionChecks
   });
 });
 
@@ -232,7 +234,25 @@ function assertRuntimeConfigured() {
 }
 
 function hasProductionSecrets() {
-  return Boolean(ADMIN_TOKEN && DOWNLOAD_SECRET && DOWNLOAD_SECRET.length >= 32 && APP_BASE_URL && (!IS_PRODUCTION_RUNTIME || USE_BLOB_STORAGE));
+  const checks = getProductionChecks();
+  return Boolean(
+    checks.ADMIN_TOKEN_CONFIGURED &&
+    checks.DOWNLOAD_SECRET_CONFIGURED &&
+    checks.DOWNLOAD_SECRET_LENGTH_OK &&
+    checks.APP_BASE_URL_CONFIGURED &&
+    (!checks.IS_PRODUCTION_RUNTIME || checks.BLOB_CONFIGURED)
+  );
+}
+
+function getProductionChecks() {
+  return {
+    ADMIN_TOKEN_CONFIGURED: Boolean(ADMIN_TOKEN),
+    DOWNLOAD_SECRET_CONFIGURED: Boolean(DOWNLOAD_SECRET),
+    DOWNLOAD_SECRET_LENGTH_OK: Boolean(DOWNLOAD_SECRET && DOWNLOAD_SECRET.length >= 32),
+    APP_BASE_URL_CONFIGURED: Boolean(APP_BASE_URL),
+    BLOB_CONFIGURED: Boolean(USE_BLOB_STORAGE),
+    IS_PRODUCTION_RUNTIME: Boolean(IS_PRODUCTION_RUNTIME)
+  };
 }
 
 function ensureDir(dir) {
