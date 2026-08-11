@@ -50,8 +50,8 @@ Para a conta Gmail de envio, configure na Vercel:
 - `SMTP_HOST=smtp.gmail.com`
 - `SMTP_PORT=465`
 - `SMTP_SECURE=true`
-- `SMTP_USER=munaluanda@gmail.com`
-- `EMAIL_FROM=munaluanda@gmail.com`
+- `SMTP_USER=luandamuna@gmail.com`
+- `EMAIL_FROM=luandamuna@gmail.com`
 - `SMTP_PASSWORD` com a Google App Password real
 
 O painel administrativo tem um botao de teste SMTP. Ele usa a mesma configuracao do envio real e envia o teste para `EMAIL_JOAO_PEDRO`.
