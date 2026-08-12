@@ -23,7 +23,7 @@
     "guilhermeZaza": {
       "name": "Guilherme Zaza",
       "role": "Diretor de Imagem",
-      "email": "guilhermeza80@gmail.com"
+      "email": "guilhermezaza80@gmail.com"
     },
     "tobiaBernardo": {
       "name": "Tobia Bernardo",
@@ -39,7 +39,7 @@
     "parcerias": ["natashaSara"],
     "diaspora": ["natashaSara"],
     "provincial": ["natashaSara"],
-    "rp": ["natashaSara"],
+    "rp": ["guilhermeZaza"],
     "designer": ["guilhermeZaza"],
     "fotografo": ["guilhermeZaza"],
     "videografo": ["guilhermeZaza"],
