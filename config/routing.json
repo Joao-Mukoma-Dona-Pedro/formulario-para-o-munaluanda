@@ -16,8 +16,8 @@
       "email": "natashasarahars@gmail.com"
     },
     "simaoCoimbra": {
-      "name": "Simao Coimbra",
-      "role": "Responsavel pela Comunicacao",
+      "name": "Simão Coimbra",
+      "role": "Responsavel por Formacao e Curriculo",
       "email": "engenheirocoimbra4@gmail.com"
     },
     "guilhermeZaza": {
@@ -34,6 +34,11 @@
   "globalRecipients": ["joaoPedro"],
   "jobRecipients": {
     "secretario": ["felisbertaPanzo"],
+    "especialistaCurriculo": ["simaoCoimbra"],
+    "coordenadorPedagogico": ["simaoCoimbra"],
+    "tecnicoAvaliacaoMonitoria": ["simaoCoimbra"],
+    "tecnicoMateriaisDidaticos": ["simaoCoimbra"],
+    "assistenteAdministrativo": ["simaoCoimbra"],
     "escolas": ["natashaSara"],
     "universidades": ["natashaSara"],
     "parcerias": ["natashaSara"],
@@ -43,7 +48,7 @@
     "designer": ["guilhermeZaza"],
     "fotografo": ["guilhermeZaza"],
     "videografo": ["guilhermeZaza"],
-    "redator": ["simaoCoimbra", "guilhermeZaza"],
+    "redator": ["guilhermeZaza"],
     "eventos": ["tobiaBernardo"]
   },
   "eventRelatedJobs": ["eventos"]

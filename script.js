@@ -291,6 +291,131 @@ const jobs = {
             }
         ]
     },
+    especialistaCurriculo: {
+        title: "Especialista de Currículo",
+        icon: "fa-book-open-reader",
+        short: "Apoia a estruturação de conteúdos, módulos e percursos formativos.",
+        description: "Contribui para organizar conteúdos educativos, objetivos de aprendizagem e materiais ligados à formação dos participantes.",
+        essential: [
+            "Interesse por educação, currículo e aprendizagem.",
+            "Boa escrita e capacidade de organizar ideias.",
+            "Atenção ao detalhe na revisão de conteúdos.",
+            "Responsabilidade com prazos e orientação da equipa."
+        ],
+        valued: [
+            "Experiência em clubes académicos, explicações ou projetos educativos.",
+            "Conhecimento básico de ferramentas de documentos digitais.",
+            "Capacidade de transformar temas complexos em conteúdo claro."
+        ],
+        documents: [
+            {
+                id: "cv",
+                name: "Curriculum Vitae",
+                reason: "Permite avaliar formação, experiências académicas e envolvimento em atividades educativas.",
+                required: true
+            }
+        ]
+    },
+    coordenadorPedagogico: {
+        title: "Coordenador Pedagógico",
+        icon: "fa-chalkboard-user",
+        short: "Acompanha a organização pedagógica das formações e atividades educativas.",
+        description: "Apoia a coordenação de sessões, acompanhamento de participantes e alinhamento entre objetivos pedagógicos e execução das atividades.",
+        essential: [
+            "Boa comunicação com participantes e equipa.",
+            "Capacidade de planear e acompanhar atividades.",
+            "Responsabilidade e atenção ao processo de aprendizagem.",
+            "Interesse por educação e desenvolvimento estudantil."
+        ],
+        valued: [
+            "Experiência em liderança, tutoria ou apoio académico.",
+            "Facilidade para mediar grupos e acompanhar progresso.",
+            "Organização de calendários, sessões ou materiais."
+        ],
+        documents: [
+            {
+                id: "cv",
+                name: "Curriculum Vitae",
+                reason: "Ajuda a conhecer experiências de coordenação, formação, liderança ou apoio estudantil.",
+                required: true
+            }
+        ]
+    },
+    tecnicoAvaliacaoMonitoria: {
+        title: "Técnico de Avaliação e Monitoria",
+        icon: "fa-chart-line",
+        short: "Apoia o acompanhamento de resultados, dados e indicadores das atividades.",
+        description: "Contribui para recolher informações, organizar dados simples e apoiar a avaliação do impacto das iniciativas formativas.",
+        essential: [
+            "Organização e atenção ao detalhe.",
+            "Capacidade de trabalhar com dados e registos simples.",
+            "Responsabilidade na recolha e tratamento de informações.",
+            "Boa comunicação escrita para relatórios básicos."
+        ],
+        valued: [
+            "Noções de Excel, Google Sheets ou ferramentas semelhantes.",
+            "Interesse por avaliação, monitoria e melhoria de projetos.",
+            "Experiência em pesquisas, formulários ou relatórios escolares."
+        ],
+        documents: [
+            {
+                id: "cv",
+                name: "Curriculum Vitae",
+                reason: "Ajuda a conhecer formação, experiências com dados, relatórios ou projetos académicos.",
+                required: true
+            }
+        ]
+    },
+    tecnicoMateriaisDidaticos: {
+        title: "Técnico de Materiais Didáticos",
+        icon: "fa-layer-group",
+        short: "Apoia a criação, organização e revisão de materiais educativos.",
+        description: "Trabalha na preparação de guias, fichas, apresentações e outros materiais de apoio às formações.",
+        essential: [
+            "Boa escrita e organização visual básica.",
+            "Atenção ao detalhe na revisão de materiais.",
+            "Capacidade de trabalhar com documentos digitais.",
+            "Responsabilidade com prazos e orientações recebidas."
+        ],
+        valued: [
+            "Experiência com Word, Google Docs, PowerPoint, Canva ou ferramentas semelhantes.",
+            "Interesse por design educativo e comunicação clara.",
+            "Capacidade de adaptar conteúdos para estudantes."
+        ],
+        documents: [
+            {
+                id: "cv",
+                name: "Curriculum Vitae",
+                reason: "Permite conhecer formação, experiências académicas e competências com materiais digitais.",
+                required: true
+            }
+        ]
+    },
+    assistenteAdministrativo: {
+        title: "Assistente Administrativo",
+        icon: "fa-folder-open",
+        short: "Apoia tarefas administrativas, organização de documentos e acompanhamento interno.",
+        description: "Contribui para manter registos, organizar informações, apoiar agendas e dar suporte administrativo à equipa.",
+        essential: [
+            "Organização de documentos e informações.",
+            "Boa comunicação escrita.",
+            "Responsabilidade e discrição.",
+            "Capacidade básica de usar documentos digitais."
+        ],
+        valued: [
+            "Experiência em secretariado estudantil, clubes ou grupos académicos.",
+            "Noções de Word, Google Docs, Excel ou ferramentas semelhantes.",
+            "Atenção a prazos, reuniões e registos."
+        ],
+        documents: [
+            {
+                id: "cv",
+                name: "Curriculum Vitae",
+                reason: "Ajuda a conhecer experiências de organização, apoio administrativo ou participação em projetos.",
+                required: true
+            }
+        ]
+    },
     secretario: {
         title: "Secretário",
         icon: "fa-clipboard-list",
