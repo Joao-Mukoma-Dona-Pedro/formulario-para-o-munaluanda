@@ -416,6 +416,31 @@ const jobs = {
             }
         ]
     },
+    eventos: {
+        title: "Assistente de Organização de Eventos",
+        icon: "fa-calendar-check",
+        short: "Apoia a preparação física e operacional dos eventos.",
+        description: "Trabalha diretamente na montagem, preparação, apoio durante eventos e execução das tarefas necessárias para que cada atividade esteja pronta.",
+        essential: [
+            "Organização operacional e atenção ao detalhe.",
+            "Disponibilidade para apoiar preparação física, montagem e realização de eventos.",
+            "Capacidade de seguir orientações e trabalhar em equipa.",
+            "Responsabilidade na execução de tarefas antes, durante e depois das atividades."
+        ],
+        valued: [
+            "Experiência em organização de eventos escolares, juvenis ou comunitários.",
+            "Facilidade para resolver problemas práticos no local.",
+            "Boa comunicação com equipa de apoio e responsáveis."
+        ],
+        documents: [
+            {
+                id: "cv",
+                name: "Curriculum Vitae",
+                reason: "Ajuda a conhecer experiências de organização, apoio operacional, trabalho em equipa e disponibilidade para eventos.",
+                required: true
+            }
+        ]
+    },
     secretario: {
         title: "Secretário",
         icon: "fa-clipboard-list",
