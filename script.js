@@ -419,6 +419,7 @@ const jobs = {
     eventos: {
         title: "Assistente de Organização de Eventos",
         icon: "fa-calendar-check",
+        requiresLuanda: true,
         short: "Apoia a preparação física e operacional dos eventos.",
         description: "Trabalha diretamente na montagem, preparação, apoio durante eventos e execução das tarefas necessárias para que cada atividade esteja pronta.",
         essential: [
@@ -474,6 +475,149 @@ const jobs = {
     }
 };
 
+const commonQuestions = [
+    {
+        id: "motivation",
+        label: "Por que gostaria de fazer parte da Model UN Academy Luanda Chapter?",
+        type: "textarea",
+        maxLength: 700,
+        placeholder: "Explique a sua motivação em poucas linhas."
+    },
+    {
+        id: "fit",
+        label: "Por que acha que é a pessoa certa para este cargo?",
+        type: "textarea",
+        maxLength: 700,
+        placeholder: "Relacione as suas competências com a função escolhida."
+    },
+    {
+        id: "availability",
+        label: "Consegue participar regularmente das reuniões?",
+        type: "select",
+        options: ["Sim", "Não", "Depende do horário"]
+    }
+];
+
+const questionsByJob = {
+    escolas: [
+        { id: "schoolApproach", label: "Como abordaria um diretor de escola para apresentar a Model UN Academy e conseguir estabelecer uma parceria?", type: "textarea", maxLength: 700, placeholder: "Descreva uma abordagem institucional clara e respeitosa." },
+        { id: "institutionalCommunication", label: "Como garantiria uma comunicação institucional clara e profissional com escolas?", type: "textarea", maxLength: 600, placeholder: "Explique como organizaria contactos, mensagens e seguimento." },
+        { id: "schoolPartnershipFollowUp", label: "Como acompanharia uma escola depois do primeiro contacto para manter a parceria ativa?", type: "textarea", maxLength: 600, placeholder: "Indique passos de acompanhamento e organização." },
+        { id: "previousExperience", label: "Que experiência anterior tem em contacto com escolas, clubes estudantis, associações ou projetos educativos?", type: "textarea", maxLength: 600, placeholder: "Inclua exemplos concretos, se existirem." }
+    ],
+    universidades: [
+        { id: "universityApproach", label: "Como abordaria uma universidade para apresentar a Model UN Academy e estabelecer uma parceria?", type: "textarea", maxLength: 700, placeholder: "Descreva a abordagem e o seguimento institucional." },
+        { id: "universityRelations", label: "Que experiência ou contacto tem com universidades, associações académicas ou grupos estudantis?", type: "textarea", maxLength: 600, placeholder: "Inclua experiências formais ou informais." },
+        { id: "partnershipBuilding", label: "Como ajudaria a construir uma parceria útil para estudantes universitários?", type: "textarea", maxLength: 600, placeholder: "Explique a proposta de valor e a organização." },
+        { id: "institutionalFollowUp", label: "Como acompanharia contactos institucionais para garantir continuidade e resposta?", type: "textarea", maxLength: 600, placeholder: "Indique método, registos e prazos." }
+    ],
+    parcerias: [
+        { id: "partnerIdentification", label: "Como identificaria potenciais parceiros para a Model UN Academy?", type: "textarea", maxLength: 600, placeholder: "Explique critérios, pesquisa e prioridades." },
+        { id: "institutionalApproach", label: "Como faria uma abordagem institucional a um potencial parceiro?", type: "textarea", maxLength: 700, placeholder: "Descreva mensagem, postura e seguimento." },
+        { id: "proposalBuilding", label: "Como ajudaria a construir uma proposta de parceria clara e convincente?", type: "textarea", maxLength: 600, placeholder: "Indique elementos que incluiria numa proposta." },
+        { id: "relationshipMaintenance", label: "Como manteria uma relação profissional com parceiros depois da parceria iniciada?", type: "textarea", maxLength: 600, placeholder: "Explique acompanhamento, comunicação e responsabilidade." }
+    ],
+    diaspora: [
+        { id: "diasporaCommunication", label: "Como comunicaria com jovens angolanos ou comunidades angolanas no exterior?", type: "textarea", maxLength: 650, placeholder: "Explique canais, tom e organização." },
+        { id: "networkBuilding", label: "Como construiria uma rede de contactos na diáspora para apoiar oportunidades internacionais?", type: "textarea", maxLength: 650, placeholder: "Descreva estratégia e acompanhamento." },
+        { id: "representationExperience", label: "Que experiência tem com comunidades, organizações, grupos estudantis ou representação institucional?", type: "textarea", maxLength: 600, placeholder: "Inclua exemplos, se existirem." },
+        { id: "internationalOpportunityChallenge", label: "Qual considera ser o maior desafio para conectar jovens angolanos a oportunidades internacionais?", type: "textarea", maxLength: 600, placeholder: "Partilhe a sua análise e possíveis respostas." }
+    ],
+    provincial: [
+        { id: "territorialCoordination", label: "Como organizaria e acompanharia atividades em diferentes províncias?", type: "textarea", maxLength: 650, placeholder: "Explique coordenação, comunicação e seguimento." },
+        { id: "teamLeadership", label: "Que experiência tem em liderança ou coordenação de pessoas?", type: "textarea", maxLength: 600, placeholder: "Inclua exemplos concretos." },
+        { id: "localProblemSolving", label: "Como resolveria dificuldades de comunicação, distância ou organização entre equipas locais?", type: "textarea", maxLength: 650, placeholder: "Descreva uma abordagem prática." },
+        { id: "activityFollowUp", label: "Como garantiria acompanhamento regular das atividades e resultados na sua área?", type: "textarea", maxLength: 600, placeholder: "Indique método de registo e prestação de contas." }
+    ],
+    designer: [
+        { id: "designExperience", label: "Que experiência tem em design gráfico e criação de peças visuais?", type: "textarea", maxLength: 600, placeholder: "Inclua projetos pessoais, escolares ou profissionais." },
+        { id: "designTools", label: "Que ferramentas ou softwares de design domina?", type: "textarea", maxLength: 500, placeholder: "Ex.: Canva, Photoshop, Illustrator, Figma." },
+        { id: "visualIdentity", label: "Como garantiria que as peças respeitam a identidade visual da organização?", type: "textarea", maxLength: 600, placeholder: "Explique o seu cuidado com consistência visual." },
+        { id: "socialMediaDesign", label: "Que experiência tem na criação de peças para redes sociais ou materiais institucionais?", type: "textarea", maxLength: 600, placeholder: "Descreva formatos e exemplos." },
+        { id: "portfolioExamples", label: "Indique links ou descreva exemplos do seu portfólio mais relevantes para esta função.", type: "textarea", maxLength: 600, placeholder: "Pode indicar links ou descrever trabalhos anexados." }
+    ],
+    redator: [
+        { id: "writingExperience", label: "Que experiência tem em redação ou produção de conteúdo?", type: "textarea", maxLength: 600, placeholder: "Inclua textos escolares, artigos, publicações ou projetos." },
+        { id: "contentTypes", label: "Que tipos de conteúdo sabe produzir com mais segurança?", type: "textarea", maxLength: 500, placeholder: "Ex.: legendas, artigos, comunicados, roteiros, posts." },
+        { id: "audienceAdaptation", label: "Como adapta a linguagem para diferentes públicos?", type: "textarea", maxLength: 600, placeholder: "Dê um exemplo de adaptação de tom ou formato." },
+        { id: "institutionalContent", label: "Que experiência tem com redes sociais ou conteúdo institucional?", type: "textarea", maxLength: 600, placeholder: "Descreva plataformas, formatos ou responsabilidades." },
+        { id: "deadlineWriting", label: "Como organiza o seu trabalho para cumprir prazos de escrita e revisão?", type: "textarea", maxLength: 500, placeholder: "Explique método, revisão e entrega." },
+        { id: "writingSamples", label: "Indique links ou descreva exemplos de textos que representem bem a sua escrita.", type: "textarea", maxLength: 600, placeholder: "Pode indicar links ou referir o texto anexado." }
+    ],
+    fotografo: [
+        { id: "photoExperience", label: "Que experiência tem em fotografia?", type: "textarea", maxLength: 600, placeholder: "Inclua eventos, projetos pessoais ou trabalhos escolares." },
+        { id: "photoEquipment", label: "Que equipamento fotográfico sabe utilizar?", type: "textarea", maxLength: 500, placeholder: "Pode incluir câmara, smartphone, luzes ou acessórios." },
+        { id: "photoEditing", label: "Que experiência tem em edição ou tratamento de fotografias?", type: "textarea", maxLength: 500, placeholder: "Indique ferramentas e tipo de edição." },
+        { id: "eventCoverage", label: "Como faria a cobertura fotográfica de um evento da organização?", type: "textarea", maxLength: 650, placeholder: "Explique preparação, captação e entrega." },
+        { id: "composition", label: "Como trabalha composição, enquadramento e seleção das melhores imagens?", type: "textarea", maxLength: 600, placeholder: "Descreva o seu critério visual." },
+        { id: "portfolioExamples", label: "Indique links ou descreva exemplos do seu portfólio mais relevantes para esta função.", type: "textarea", maxLength: 600, placeholder: "Pode indicar links ou descrever trabalhos anexados." }
+    ],
+    videografo: [
+        { id: "videoExperience", label: "Que experiência tem em produção de vídeo?", type: "textarea", maxLength: 600, placeholder: "Inclua gravação, edição, eventos ou redes sociais." },
+        { id: "videoTools", label: "Que ferramentas ou softwares de edição de vídeo domina?", type: "textarea", maxLength: 500, placeholder: "Ex.: CapCut, Premiere, DaVinci Resolve, InShot." },
+        { id: "videoEquipment", label: "Que equipamentos sabe utilizar para gravação de vídeo?", type: "textarea", maxLength: 500, placeholder: "Pode incluir câmara, smartphone, microfone, tripé ou luz." },
+        { id: "videoEventCoverage", label: "Como faria a cobertura audiovisual de um evento da organização?", type: "textarea", maxLength: 650, placeholder: "Explique preparação, gravação, som, imagem e entrega." },
+        { id: "visualStorytelling", label: "Como contaria uma história através de vídeo curto para redes sociais?", type: "textarea", maxLength: 600, placeholder: "Explique narrativa, ritmo e escolha de imagens." },
+        { id: "portfolioExamples", label: "Indique links ou descreva exemplos do seu portfólio mais relevantes para esta função.", type: "textarea", maxLength: 600, placeholder: "Pode indicar links ou descrever vídeos anexados." }
+    ],
+    rp: [
+        { id: "publicRelationsExperience", label: "Que experiência tem em comunicação, relações públicas ou representação institucional?", type: "textarea", maxLength: 650, placeholder: "Inclua eventos, clubes, projetos ou atendimento ao público." },
+        { id: "contactManagement", label: "Como organizaria e acompanharia contactos com pessoas e instituições?", type: "textarea", maxLength: 600, placeholder: "Explique registos, seguimento e postura profissional." },
+        { id: "externalCommunication", label: "Como comunicaria externamente em nome da organização mantendo uma imagem profissional?", type: "textarea", maxLength: 650, placeholder: "Descreva tom, cuidado e responsabilidade." },
+        { id: "delicateSituation", label: "Como lidaria com uma situação delicada envolvendo um convidado, parceiro ou participante?", type: "textarea", maxLength: 650, placeholder: "Explique como agiria com calma e respeito." },
+        { id: "rpScenario", label: "Como apresentaria a Model UN Academy a uma instituição ou convidado que ainda não conhece a organização?", type: "textarea", maxLength: 650, placeholder: "Formule uma abordagem de relações públicas." }
+    ],
+    especialistaCurriculo: [
+        { id: "academicBackground", label: "Qual é a sua formação académica e área de formação?", type: "textarea", maxLength: 600, placeholder: "Descreva curso, área, nível e interesses académicos." },
+        { id: "technicalSkills", label: "Que competências técnicas tem para apoiar formação, currículo ou desenvolvimento de conteúdos?", type: "textarea", maxLength: 650, placeholder: "Inclua escrita, pesquisa, organização de módulos ou ferramentas." },
+        { id: "educationCurriculumExperience", label: "Que experiência tem em educação, currículo, formação ou elaboração de conteúdos?", type: "textarea", maxLength: 700, placeholder: "Inclua projetos, explicações, clubes ou materiais." },
+        { id: "contentDevelopment", label: "Como estruturaria um conteúdo ou sessão de formação para jovens participantes?", type: "textarea", maxLength: 700, placeholder: "Explique objetivos, sequência e avaliação." },
+        { id: "academicProfessionalGoals", label: "Quais são os seus objetivos académicos ou profissionais e como se relacionam com esta função?", type: "textarea", maxLength: 600, placeholder: "Relacione o seu percurso com currículo e formação." }
+    ],
+    coordenadorPedagogico: [
+        { id: "academicBackground", label: "Qual é a sua formação académica e área de formação?", type: "textarea", maxLength: 600, placeholder: "Descreva curso, área, nível e interesses académicos." },
+        { id: "pedagogicalExperience", label: "Que experiência tem em pedagogia, tutoria, formação ou acompanhamento de estudantes?", type: "textarea", maxLength: 700, placeholder: "Inclua exemplos formais ou informais." },
+        { id: "educationalPlanning", label: "Como planearia e acompanharia uma atividade educativa?", type: "textarea", maxLength: 700, placeholder: "Explique objetivos, organização, execução e avaliação." },
+        { id: "studentFollowUp", label: "Como acompanharia estudantes ou equipas com diferentes níveis de preparação?", type: "textarea", maxLength: 650, placeholder: "Descreva orientação, comunicação e apoio." },
+        { id: "pedagogicalProblemSolving", label: "Como resolveria um problema durante uma formação ou atividade pedagógica?", type: "textarea", maxLength: 650, placeholder: "Dê uma resposta prática e responsável." }
+    ],
+    tecnicoAvaliacaoMonitoria: [
+        { id: "evaluationExperience", label: "Que experiência tem com avaliação, monitoria ou acompanhamento de resultados?", type: "textarea", maxLength: 650, placeholder: "Inclua projetos, pesquisas, formulários ou relatórios." },
+        { id: "dataAnalysis", label: "Como faria a recolha e análise de dados de uma atividade da organização?", type: "textarea", maxLength: 700, placeholder: "Explique fontes, organização e tratamento dos dados." },
+        { id: "indicators", label: "Que indicadores usaria para acompanhar o impacto de uma formação ou evento?", type: "textarea", maxLength: 650, placeholder: "Indique exemplos de indicadores e porquê." },
+        { id: "reporting", label: "Que experiência tem na elaboração de relatórios ou apresentação de resultados?", type: "textarea", maxLength: 600, placeholder: "Inclua ferramentas e exemplos." },
+        { id: "monitoringTools", label: "Que ferramentas informáticas sabe usar para organizar dados e acompanhar atividades?", type: "textarea", maxLength: 500, placeholder: "Ex.: Excel, Google Sheets, Forms, dashboards." }
+    ],
+    tecnicoMateriaisDidaticos: [
+        { id: "educationalMaterialsExperience", label: "Que experiência tem na produção de materiais educativos ou pedagógicos?", type: "textarea", maxLength: 650, placeholder: "Inclua fichas, guias, apresentações ou conteúdos." },
+        { id: "materialsTools", label: "Que ferramentas utiliza para elaborar ou organizar materiais didáticos?", type: "textarea", maxLength: 500, placeholder: "Ex.: Word, Google Docs, PowerPoint, Canva." },
+        { id: "contentOrganization", label: "Como organizaria um conteúdo para que fosse claro e útil para estudantes?", type: "textarea", maxLength: 650, placeholder: "Explique estrutura, linguagem e exemplos." },
+        { id: "audienceAdaptation", label: "Como adaptaria materiais para públicos com diferentes níveis de conhecimento?", type: "textarea", maxLength: 650, placeholder: "Descreva critérios e adaptações." },
+        { id: "creativeMaterials", label: "Como combina criatividade e rigor na preparação de materiais didáticos?", type: "textarea", maxLength: 600, placeholder: "Explique o seu método de trabalho." }
+    ],
+    assistenteAdministrativo: [
+        { id: "administrativeExperience", label: "Que experiência tem em organização administrativa ou gestão de documentos?", type: "textarea", maxLength: 650, placeholder: "Inclua clubes, projetos, trabalho ou escola." },
+        { id: "officeTools", label: "Que ferramentas de escritório sabe utilizar?", type: "textarea", maxLength: 500, placeholder: "Ex.: Word, Excel, Google Docs, Google Sheets." },
+        { id: "taskManagement", label: "Como organiza tarefas, prazos e informações para não perder detalhes importantes?", type: "textarea", maxLength: 650, placeholder: "Explique o seu método de organização." },
+        { id: "professionalCommunication", label: "Como garantiria uma comunicação profissional em mensagens, documentos e contactos internos?", type: "textarea", maxLength: 600, placeholder: "Descreva tom, clareza e cuidado." },
+        { id: "detailAttention", label: "Conte uma situação em que a sua atenção ao detalhe ajudou a evitar ou resolver um problema.", type: "textarea", maxLength: 600, placeholder: "Pode ser uma experiência escolar, profissional ou associativa." }
+    ],
+    eventos: [
+        { id: "eventOrganizationExperience", label: "Que experiência tem na organização de eventos?", type: "textarea", maxLength: 650, placeholder: "Inclua eventos escolares, juvenis, comunitários ou profissionais." },
+        { id: "eventLogistics", label: "Que experiência tem com logística, montagem ou preparação física de eventos?", type: "textarea", maxLength: 650, placeholder: "Descreva tarefas práticas que já executou." },
+        { id: "eventPressure", label: "Como trabalha sob pressão durante a preparação ou realização de um evento?", type: "textarea", maxLength: 600, placeholder: "Explique como mantém organização e calma." },
+        { id: "eventProblemSolving", label: "Como resolveria um problema inesperado durante um evento?", type: "textarea", maxLength: 650, placeholder: "Dê um exemplo de resposta prática." },
+        { id: "teamworkInstructions", label: "Como trabalha em equipa e segue orientações da pessoa responsável pelo departamento?", type: "textarea", maxLength: 600, placeholder: "Explique colaboração, comunicação e responsabilidade." }
+    ],
+    secretario: [
+        { id: "secretariatExperience", label: "Que experiência tem em organização, secretaria ou apoio administrativo?", type: "textarea", maxLength: 650, placeholder: "Inclua escola, clubes, associações ou trabalho." },
+        { id: "agendaManagement", label: "Como organizaria agendas, reuniões e acompanhamento de tarefas?", type: "textarea", maxLength: 650, placeholder: "Explique método e ferramentas." },
+        { id: "minutesDocuments", label: "Que experiência tem na elaboração de atas, documentos ou registos de reunião?", type: "textarea", maxLength: 600, placeholder: "Inclua exemplos, se existirem." },
+        { id: "informationManagement", label: "Como garantiria boa gestão de informação interna e atenção ao detalhe?", type: "textarea", maxLength: 650, placeholder: "Descreva organização, confidencialidade e revisão." },
+        { id: "taskFollowUp", label: "Como acompanharia tarefas pendentes para garantir que nada fica esquecido?", type: "textarea", maxLength: 600, placeholder: "Explique seguimento, lembretes e comunicação." }
+    ]
+};
+
 const state = {
     currentPage: 0,
     selectedJob: "",
@@ -493,15 +637,16 @@ const jobDetails = document.getElementById("jobDetails");
 const jobError = document.getElementById("jobError");
 const documents = document.getElementById("documents");
 const documentsError = document.getElementById("documentsError");
+const jobQuestions = document.getElementById("jobQuestions");
 const review = document.getElementById("review");
 const submitMessage = document.getElementById("submitMessage");
 const downloadDossierPdfButton = document.getElementById("downloadDossierPdf");
 
 function init() {
     renderJobs();
+    renderQuestions();
     bindNavigation();
     bindFieldValidation();
-    bindCounters();
     bindDossierActions();
     restoreDraft();
     updateStep();
@@ -537,8 +682,76 @@ async function selectJob(jobKey) {
     jobError.textContent = "";
     renderJobDetails();
     renderDocuments();
+    renderQuestions();
     saveDraft();
     await loadRoutingForJob(jobKey);
+}
+
+function getQuestionsForJob(jobKey) {
+    return [...commonQuestions, ...(questionsByJob[jobKey] || [])];
+}
+
+function renderQuestions() {
+    if (!jobQuestions) return;
+    if (!state.selectedJob) {
+        jobQuestions.innerHTML = `
+            <div class="notice show">
+                <i class="fa-solid fa-circle-info"></i>
+                <p>Selecione primeiro um cargo para ver as perguntas específicas da candidatura.</p>
+            </div>
+        `;
+        return;
+    }
+
+    const currentData = getFormData();
+    jobQuestions.innerHTML = getQuestionsForJob(state.selectedJob).map(renderQuestionField).join("");
+    getQuestionsForJob(state.selectedJob).forEach((question) => {
+        const field = form.elements[question.id];
+        if (field && currentData[question.id]) field.value = currentData[question.id];
+    });
+    bindDynamicQuestionEvents();
+}
+
+function renderQuestionField(question) {
+    if (question.type === "select") {
+        return `
+            <div class="field">
+                <label for="${question.id}">${escapeHtml(question.label)} <span>obrigatório</span></label>
+                <select id="${question.id}" name="${question.id}" required>
+                    <option value="">Selecione uma opção</option>
+                    ${question.options.map((option) => `<option>${escapeHtml(option)}</option>`).join("")}
+                </select>
+                <small class="field-error"></small>
+            </div>
+        `;
+    }
+
+    return `
+        <div class="field">
+            <label for="${question.id}">${escapeHtml(question.label)} <span>obrigatório</span></label>
+            <textarea id="${question.id}" name="${question.id}" maxlength="${question.maxLength || 700}" placeholder="${escapeHtml(question.placeholder || "")}" required></textarea>
+            <div class="field-meta"><small class="field-error"></small><small class="counter" data-for="${question.id}"></small></div>
+        </div>
+    `;
+}
+
+function bindDynamicQuestionEvents() {
+    jobQuestions.querySelectorAll("textarea[maxlength]").forEach((textarea) => {
+        const counter = jobQuestions.querySelector(`.counter[data-for="${textarea.id}"]`);
+        const update = () => {
+            counter.textContent = `${textarea.value.length} / ${textarea.maxLength} caracteres`;
+        };
+        textarea.addEventListener("input", update);
+        update();
+    });
+
+    jobQuestions.querySelectorAll("textarea, select").forEach((field) => {
+        field.addEventListener("input", () => {
+            validateFields(jobQuestions);
+            saveDraft();
+        });
+        field.addEventListener("blur", () => validateFields(jobQuestions));
+    });
 }
 
 function renderJobDetails() {
@@ -910,6 +1123,10 @@ async function renderReview() {
     const recipients = record.routing.recipients
         .map((recipient) => `${escapeHtml(recipient.name)} - ${escapeHtml(recipient.role)}`)
         .join("<br>");
+    const answerRows = record.answers
+        .filter((row) => !["Nome completo", "Cargo", "E-mail", "Telefone/WhatsApp", "Localização", "Idade", "Escola / Universidade / Profissão", "LinkedIn", "Redes sociais", "Disponibilidade presencial em Luanda"].includes(row.label))
+        .map((row) => `<div class="review-item full"><strong>${escapeHtml(row.label)}</strong><span>${escapeHtml(row.answer).replaceAll("\n", "<br>")}</span></div>`)
+        .join("");
     const uploadedDocs = record.documents.map((doc) => (
         `${escapeHtml(doc.name)}: ${doc.fileName ? `${escapeHtml(doc.fileName)} - Ver/Baixar após envio seguro` : "não carregado"}`
     )).join("<br>");
@@ -927,7 +1144,7 @@ async function renderReview() {
             <div class="review-item full"><strong>Destinatários</strong><span>${recipients}</span></div>
             <div class="review-item full"><strong>Assunto do e-mail</strong><span>${escapeHtml(record.emailSubject)}</span></div>
             <div class="review-item full"><strong>Documentos</strong><span>${uploadedDocs}</span></div>
-            <div class="review-item full"><strong>Motivação</strong><span>${escapeHtml(data.motivation)}</span></div>
+            ${answerRows}
             <div class="review-item full"><strong>Resumo do dossiê</strong><span>O e-mail incluirá tabela profissional com respostas, documentos, data/hora e opção de baixar o dossiê completo.</span></div>
         </div>
     `;
@@ -1049,13 +1266,7 @@ function buildDossierRows(data, selected) {
         ["Escola / Universidade / Profissão", data.institution],
         ["LinkedIn", data.linkedin || "Não informado"],
         ["Redes sociais", data.socials || "Não informado"],
-        ["Motivação", data.motivation],
-        ["Adequação ao cargo", data.fit],
-        ["Experiência / abordagem com escolas", data.schoolPitch],
-        ["Visão sobre desafios dos jovens", data.challenge],
-        ["Competências de comunicação", data.communication],
-        ["Disponibilidade", data.availability],
-        ["Informações adicionais", "Não informado"]
+        ...getQuestionsForJob(state.selectedJob).map((question) => [question.label, data[question.id]])
     ];
 
     if (selected.requiresLuanda) {
@@ -1191,10 +1402,7 @@ function restoreDraft() {
     if (rawDraft) {
         try {
             draft = JSON.parse(rawDraft);
-            Object.entries(draft).forEach(([name, value]) => {
-                const field = form.elements[name];
-                if (field && field.type !== "file") field.value = value;
-            });
+            applyFormValues(draft);
         } catch {
             localStorage.removeItem("muna_draft");
         }
@@ -1203,12 +1411,21 @@ function restoreDraft() {
     const savedJob = localStorage.getItem("muna_selected_job");
     if (savedJob && jobs[savedJob]) {
         selectJob(savedJob);
+        applyFormValues(draft);
         const luandaAvailability = document.getElementById("luandaAvailability");
         if (luandaAvailability && draft.luandaAvailability) {
             luandaAvailability.value = draft.luandaAvailability;
             validateLuandaAvailability();
         }
     }
+}
+
+function applyFormValues(values) {
+    Object.entries(values).forEach(([name, value]) => {
+        const field = form.elements[name];
+        if (field && field.type !== "file") field.value = value;
+    });
+    if (jobQuestions) bindDynamicQuestionEvents();
 }
 
 function isValidUrl(value) {

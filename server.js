@@ -1,4 +1,4 @@
-const crypto = require("crypto");
+﻿const crypto = require("crypto");
 const fs = require("fs");
 const path = require("path");
 const { Readable } = require("stream");
@@ -32,7 +32,7 @@ const allowedMimeTypes = new Set([
   "image/jpeg",
   "image/png"
 ]);
-const applicationStates = ["Recebida", "Em análise", "Pré-selecionada", "Entrevista", "Selecionada", "Não selecionada"];
+const applicationStates = ["Recebida", "Em anÃ¡lise", "PrÃ©-selecionada", "Entrevista", "Selecionada", "NÃ£o selecionada"];
 
 if (!USE_BLOB_STORAGE && !IS_PRODUCTION_RUNTIME) {
   ensureDir(DATA_DIR);
@@ -46,7 +46,7 @@ const upload = multer({
   fileFilter: (_req, file, cb) => {
     const extension = getExtension(file.originalname);
     if (!allowedExtensions.has(extension) || !allowedMimeTypes.has(file.mimetype)) {
-      cb(new Error(`Tipo de ficheiro inválido: ${file.originalname}`));
+      cb(new Error(`Tipo de ficheiro invÃ¡lido: ${file.originalname}`));
       return;
     }
     cb(null, true);
@@ -86,9 +86,9 @@ app.post("/api/applications", upload.any(), async (req, res) => {
     const now = new Date();
     const id = createApplicationId(jobKey);
     const recipients = getRoutingForJob(jobKey);
-    if (!recipients.length) throw new Error("Não existem responsáveis configurados para este cargo.");
+    if (!recipients.length) throw new Error("NÃ£o existem responsÃ¡veis configurados para este cargo.");
     const missingRecipient = recipients.find((recipient) => !recipient.email || String(recipient.email).startsWith("CONFIGURAR_"));
-    if (missingRecipient) throw new Error(`E-mail do responsável não configurado: ${missingRecipient.name}.`);
+    if (missingRecipient) throw new Error(`E-mail do responsÃ¡vel nÃ£o configurado: ${missingRecipient.name}.`);
 
     const submittedAt = now.toISOString();
     const submittedAtDisplay = now.toLocaleString("pt-PT", { dateStyle: "medium", timeStyle: "short" });
@@ -101,8 +101,8 @@ app.post("/api/applications", upload.any(), async (req, res) => {
         key: jobKey,
         title: String(req.body.selectedJobTitle || dossier.job?.title || jobKey)
       },
-      data: pickApplicationData(req.body),
-      answers: Array.isArray(dossier.answers) ? dossier.answers : buildAnswerRows(req.body),
+      data: pickApplicationData(req.body, jobKey),
+      answers: buildAnswerRows(req.body, jobKey),
       documents: [],
       routing: {
         recipients: recipients.map(publicRecipient),
@@ -128,7 +128,7 @@ app.post("/api/applications", upload.any(), async (req, res) => {
     record.audit.push({
       at: record.emailLastAttemptAt,
       action: "email",
-      details: emailResult.status === "sent" ? "E-mail enviado aos responsáveis." : `Falha no envio: ${emailResult.error}`
+      details: emailResult.status === "sent" ? "E-mail enviado aos responsÃ¡veis." : `Falha no envio: ${emailResult.error}`
     });
 
     await persistRecord(record);
@@ -141,7 +141,7 @@ app.post("/api/applications", upload.any(), async (req, res) => {
       message: "Candidatura enviada com sucesso!"
     });
   } catch (error) {
-    res.status(400).json({ ok: false, error: error.message || "Não foi possível receber a candidatura." });
+    res.status(400).json({ ok: false, error: error.message || "NÃ£o foi possÃ­vel receber a candidatura." });
   }
 });
 
@@ -159,15 +159,15 @@ app.get("/api/admin/applications", requireAdmin, async (req, res) => {
 
 app.get("/api/admin/applications/:id", requireAdmin, async (req, res) => {
   const record = await readFullRecord(req.params.id);
-  if (!record) return res.status(404).json({ error: "Candidatura não encontrada." });
+  if (!record) return res.status(404).json({ error: "Candidatura nÃ£o encontrada." });
   res.json(withDownloadLinks(record));
 });
 
 app.patch("/api/admin/applications/:id/state", requireAdmin, async (req, res) => {
   const record = await readFullRecord(req.params.id);
-  if (!record) return res.status(404).json({ error: "Candidatura não encontrada." });
+  if (!record) return res.status(404).json({ error: "Candidatura nÃ£o encontrada." });
   const nextState = String(req.body.state || "");
-  if (!applicationStates.includes(nextState)) return res.status(400).json({ error: "Estado inválido." });
+  if (!applicationStates.includes(nextState)) return res.status(400).json({ error: "Estado invÃ¡lido." });
   record.state = nextState;
   record.audit.push({ at: new Date().toISOString(), action: "state", details: `Estado alterado para ${nextState}.` });
   await persistRecord(record);
@@ -176,7 +176,7 @@ app.patch("/api/admin/applications/:id/state", requireAdmin, async (req, res) =>
 
 app.post("/api/admin/applications/:id/resend-email", requireAdmin, async (req, res) => {
   const record = await readFullRecord(req.params.id);
-  if (!record) return res.status(404).json({ error: "Candidatura não encontrada." });
+  if (!record) return res.status(404).json({ error: "Candidatura nÃ£o encontrada." });
   const result = await sendApplicationEmail(record);
   record.emailStatus = result.status;
   record.emailError = result.error || "";
@@ -185,7 +185,7 @@ app.post("/api/admin/applications/:id/resend-email", requireAdmin, async (req, r
   record.audit.push({
     at: record.emailLastAttemptAt,
     action: "email_resend",
-    details: result.status === "sent" ? "E-mail reenviado aos responsáveis." : `Falha no reenvio: ${result.error}`
+    details: result.status === "sent" ? "E-mail reenviado aos responsÃ¡veis." : `Falha no reenvio: ${result.error}`
   });
   await persistRecord(record);
   res.json({ ok: result.status === "sent", emailStatus: record.emailStatus, emailError: record.emailError });
@@ -198,14 +198,14 @@ app.post("/api/admin/test-email", requireAdmin, async (_req, res) => {
 
 app.get("/api/download/:token", async (req, res) => {
   const payload = verifyDownloadToken(req.params.token);
-  if (!payload) return res.status(403).send("Link inválido ou expirado.");
+  if (!payload) return res.status(403).send("Link invÃ¡lido ou expirado.");
   const record = await readFullRecord(payload.applicationId);
-  if (!record) return res.status(404).send("Candidatura não encontrada.");
+  if (!record) return res.status(404).send("Candidatura nÃ£o encontrada.");
   const file = [...record.documents, record.pdf].find((item) => item && item.id === payload.fileId);
-  if (!file) return res.status(404).send("Documento não encontrado.");
+  if (!file) return res.status(404).send("Documento nÃ£o encontrado.");
 
   const stored = await readStoredFile(payload.applicationId, file);
-  if (!stored) return res.status(404).send("Documento não encontrado.");
+  if (!stored) return res.status(404).send("Documento nÃ£o encontrado.");
   res.setHeader("Content-Type", file.mimeType || "application/octet-stream");
   res.setHeader("Content-Disposition", `attachment; filename="${sanitizeDownloadName(file.originalName || file.fileName)}"`);
   if (stored.size) res.setHeader("Content-Length", stored.size);
@@ -213,7 +213,7 @@ app.get("/api/download/:token", async (req, res) => {
 });
 
 app.use((error, _req, res, _next) => {
-  res.status(400).json({ ok: false, error: error.message || "Pedido inválido." });
+  res.status(400).json({ ok: false, error: error.message || "Pedido invÃ¡lido." });
 });
 
 if (require.main === module) {
@@ -226,10 +226,10 @@ module.exports = app;
 
 function assertRuntimeConfigured() {
   if (!DOWNLOAD_SECRET || DOWNLOAD_SECRET.length < 32) {
-    throw new Error("DOWNLOAD_SECRET não configurado ou demasiado curto.");
+    throw new Error("DOWNLOAD_SECRET nÃ£o configurado ou demasiado curto.");
   }
   if (IS_PRODUCTION_RUNTIME && !USE_BLOB_STORAGE) {
-    throw new Error("BLOB_READ_WRITE_TOKEN não configurado. A Vercel requer armazenamento persistente externo para candidaturas e documentos.");
+    throw new Error("BLOB_READ_WRITE_TOKEN nÃ£o configurado. A Vercel requer armazenamento persistente externo para candidaturas e documentos.");
   }
 }
 
@@ -261,7 +261,7 @@ function ensureDir(dir) {
 
 function assertLocalStorageAllowed() {
   if (IS_PRODUCTION_RUNTIME) {
-    throw new Error("Armazenamento de produção não configurado. Configure BLOB_READ_WRITE_TOKEN para usar Vercel Blob privado.");
+    throw new Error("Armazenamento de produÃ§Ã£o nÃ£o configurado. Configure BLOB_READ_WRITE_TOKEN para usar Vercel Blob privado.");
   }
 }
 
@@ -270,21 +270,143 @@ function parseDossier(raw) {
   try {
     return JSON.parse(raw);
   } catch {
-    throw new Error("Dossiê da candidatura inválido.");
+    throw new Error("DossiÃª da candidatura invÃ¡lido.");
   }
 }
 
+const COMMON_QUESTION_IDS = ["motivation", "fit", "availability"];
+const QUESTION_IDS_BY_JOB = {
+  escolas: ["schoolApproach", "institutionalCommunication", "schoolPartnershipFollowUp", "previousExperience"],
+  universidades: ["universityApproach", "universityRelations", "partnershipBuilding", "institutionalFollowUp"],
+  parcerias: ["partnerIdentification", "institutionalApproach", "proposalBuilding", "relationshipMaintenance"],
+  diaspora: ["diasporaCommunication", "networkBuilding", "representationExperience", "internationalOpportunityChallenge"],
+  provincial: ["territorialCoordination", "teamLeadership", "localProblemSolving", "activityFollowUp"],
+  designer: ["designExperience", "designTools", "visualIdentity", "socialMediaDesign", "portfolioExamples"],
+  redator: ["writingExperience", "contentTypes", "audienceAdaptation", "institutionalContent", "deadlineWriting", "writingSamples"],
+  fotografo: ["photoExperience", "photoEquipment", "photoEditing", "eventCoverage", "composition", "portfolioExamples"],
+  videografo: ["videoExperience", "videoTools", "videoEquipment", "videoEventCoverage", "visualStorytelling", "portfolioExamples"],
+  rp: ["publicRelationsExperience", "contactManagement", "externalCommunication", "delicateSituation", "rpScenario"],
+  especialistaCurriculo: ["academicBackground", "technicalSkills", "educationCurriculumExperience", "contentDevelopment", "academicProfessionalGoals"],
+  coordenadorPedagogico: ["academicBackground", "pedagogicalExperience", "educationalPlanning", "studentFollowUp", "pedagogicalProblemSolving"],
+  tecnicoAvaliacaoMonitoria: ["evaluationExperience", "dataAnalysis", "indicators", "reporting", "monitoringTools"],
+  tecnicoMateriaisDidaticos: ["educationalMaterialsExperience", "materialsTools", "contentOrganization", "audienceAdaptation", "creativeMaterials"],
+  assistenteAdministrativo: ["administrativeExperience", "officeTools", "taskManagement", "professionalCommunication", "detailAttention"],
+  eventos: ["eventOrganizationExperience", "eventLogistics", "eventPressure", "eventProblemSolving", "teamworkInstructions"],
+  secretario: ["secretariatExperience", "agendaManagement", "minutesDocuments", "informationManagement", "taskFollowUp"]
+};
+const QUESTION_LABELS = {
+  motivation: "Por que gostaria de fazer parte da Model UN Academy Luanda Chapter?",
+  fit: "Por que acha que é a pessoa certa para este cargo?",
+  availability: "Consegue participar regularmente das reuniões?",
+  schoolApproach: "Como abordaria um diretor de escola para apresentar a Model UN Academy e conseguir estabelecer uma parceria?",
+  institutionalCommunication: "Como garantiria uma comunicação institucional clara e profissional com escolas?",
+  schoolPartnershipFollowUp: "Como acompanharia uma escola depois do primeiro contacto para manter a parceria ativa?",
+  previousExperience: "Que experiência anterior tem em contacto com escolas, clubes estudantis, associações ou projetos educativos?",
+  universityApproach: "Como abordaria uma universidade para apresentar a Model UN Academy e estabelecer uma parceria?",
+  universityRelations: "Que experiência ou contacto tem com universidades, associações académicas ou grupos estudantis?",
+  partnershipBuilding: "Como ajudaria a construir uma parceria útil para estudantes universitários?",
+  institutionalFollowUp: "Como acompanharia contactos institucionais para garantir continuidade e resposta?",
+  partnerIdentification: "Como identificaria potenciais parceiros para a Model UN Academy?",
+  institutionalApproach: "Como faria uma abordagem institucional a um potencial parceiro?",
+  proposalBuilding: "Como ajudaria a construir uma proposta de parceria clara e convincente?",
+  relationshipMaintenance: "Como manteria uma relação profissional com parceiros depois da parceria iniciada?",
+  diasporaCommunication: "Como comunicaria com jovens angolanos ou comunidades angolanas no exterior?",
+  networkBuilding: "Como construiria uma rede de contactos na diáspora para apoiar oportunidades internacionais?",
+  representationExperience: "Que experiência tem com comunidades, organizações, grupos estudantis ou representação institucional?",
+  internationalOpportunityChallenge: "Qual considera ser o maior desafio para conectar jovens angolanos a oportunidades internacionais?",
+  territorialCoordination: "Como organizaria e acompanharia atividades em diferentes províncias?",
+  teamLeadership: "Que experiência tem em liderança ou coordenação de pessoas?",
+  localProblemSolving: "Como resolveria dificuldades de comunicação, distância ou organização entre equipas locais?",
+  activityFollowUp: "Como garantiria acompanhamento regular das atividades e resultados na sua área?",
+  designExperience: "Que experiência tem em design gráfico e criação de peças visuais?",
+  designTools: "Que ferramentas ou softwares de design domina?",
+  visualIdentity: "Como garantiria que as peças respeitam a identidade visual da organização?",
+  socialMediaDesign: "Que experiência tem na criação de peças para redes sociais ou materiais institucionais?",
+  portfolioExamples: "Indique links ou descreva exemplos do seu portfólio mais relevantes para esta função.",
+  writingExperience: "Que experiência tem em redação ou produção de conteúdo?",
+  contentTypes: "Que tipos de conteúdo sabe produzir com mais segurança?",
+  audienceAdaptation: "Como adapta a linguagem para diferentes públicos?",
+  institutionalContent: "Que experiência tem com redes sociais ou conteúdo institucional?",
+  deadlineWriting: "Como organiza o seu trabalho para cumprir prazos de escrita e revisão?",
+  writingSamples: "Indique links ou descreva exemplos de textos que representem bem a sua escrita.",
+  photoExperience: "Que experiência tem em fotografia?",
+  photoEquipment: "Que equipamento fotográfico sabe utilizar?",
+  photoEditing: "Que experiência tem em edição ou tratamento de fotografias?",
+  eventCoverage: "Como faria a cobertura fotográfica de um evento da organização?",
+  composition: "Como trabalha composição, enquadramento e seleção das melhores imagens?",
+  videoExperience: "Que experiência tem em produção de vídeo?",
+  videoTools: "Que ferramentas ou softwares de edição de vídeo domina?",
+  videoEquipment: "Que equipamentos sabe utilizar para gravação de vídeo?",
+  videoEventCoverage: "Como faria a cobertura audiovisual de um evento da organização?",
+  visualStorytelling: "Como contaria uma história através de vídeo curto para redes sociais?",
+  publicRelationsExperience: "Que experiência tem em comunicação, relações públicas ou representação institucional?",
+  contactManagement: "Como organizaria e acompanharia contactos com pessoas e instituições?",
+  externalCommunication: "Como comunicaria externamente em nome da organização mantendo uma imagem profissional?",
+  delicateSituation: "Como lidaria com uma situação delicada envolvendo um convidado, parceiro ou participante?",
+  rpScenario: "Como apresentaria a Model UN Academy a uma instituição ou convidado que ainda não conhece a organização?",
+  academicBackground: "Qual é a sua formação académica e área de formação?",
+  technicalSkills: "Que competências técnicas tem para apoiar formação, currículo ou desenvolvimento de conteúdos?",
+  educationCurriculumExperience: "Que experiência tem em educação, currículo, formação ou elaboração de conteúdos?",
+  contentDevelopment: "Como estruturaria um conteúdo ou sessão de formação para jovens participantes?",
+  academicProfessionalGoals: "Quais são os seus objetivos académicos ou profissionais e como se relacionam com esta função?",
+  pedagogicalExperience: "Que experiência tem em pedagogia, tutoria, formação ou acompanhamento de estudantes?",
+  educationalPlanning: "Como planearia e acompanharia uma atividade educativa?",
+  studentFollowUp: "Como acompanharia estudantes ou equipas com diferentes níveis de preparação?",
+  pedagogicalProblemSolving: "Como resolveria um problema durante uma formação ou atividade pedagógica?",
+  evaluationExperience: "Que experiência tem com avaliação, monitoria ou acompanhamento de resultados?",
+  dataAnalysis: "Como faria a recolha e análise de dados de uma atividade da organização?",
+  indicators: "Que indicadores usaria para acompanhar o impacto de uma formação ou evento?",
+  reporting: "Que experiência tem na elaboração de relatórios ou apresentação de resultados?",
+  monitoringTools: "Que ferramentas informáticas sabe usar para organizar dados e acompanhar atividades?",
+  educationalMaterialsExperience: "Que experiência tem na produção de materiais educativos ou pedagógicos?",
+  materialsTools: "Que ferramentas utiliza para elaborar ou organizar materiais didáticos?",
+  contentOrganization: "Como organizaria um conteúdo para que fosse claro e útil para estudantes?",
+  creativeMaterials: "Como combina criatividade e rigor na preparação de materiais didáticos?",
+  administrativeExperience: "Que experiência tem em organização administrativa ou gestão de documentos?",
+  officeTools: "Que ferramentas de escritório sabe utilizar?",
+  taskManagement: "Como organiza tarefas, prazos e informações para não perder detalhes importantes?",
+  professionalCommunication: "Como garantiria uma comunicação profissional em mensagens, documentos e contactos internos?",
+  detailAttention: "Conte uma situação em que a sua atenção ao detalhe ajudou a evitar ou resolver um problema.",
+  eventOrganizationExperience: "Que experiência tem na organização de eventos?",
+  eventLogistics: "Que experiência tem com logística, montagem ou preparação física de eventos?",
+  eventPressure: "Como trabalha sob pressão durante a preparação ou realização de um evento?",
+  eventProblemSolving: "Como resolveria um problema inesperado durante um evento?",
+  teamworkInstructions: "Como trabalha em equipa e segue orientações da pessoa responsável pelo departamento?",
+  secretariatExperience: "Que experiência tem em organização, secretaria ou apoio administrativo?",
+  agendaManagement: "Como organizaria agendas, reuniões e acompanhamento de tarefas?",
+  minutesDocuments: "Que experiência tem na elaboração de atas, documentos ou registos de reunião?",
+  informationManagement: "Como garantiria boa gestão de informação interna e atenção ao detalhe?",
+  taskFollowUp: "Como acompanharia tarefas pendentes para garantir que nada fica esquecido?"
+};
+const LEGACY_QUESTION_IDS = ["schoolPitch", "challenge", "communication"];
+const LUANDA_REQUIRED_JOB_IDS = new Set(["designer", "redator", "fotografo", "videografo", "eventos"]);
+const ALL_QUESTION_IDS = [...new Set([...COMMON_QUESTION_IDS, ...Object.values(QUESTION_IDS_BY_JOB).flat(), ...LEGACY_QUESTION_IDS])];
+
+function getRequiredQuestionIds(jobKey) {
+  return [...COMMON_QUESTION_IDS, ...(QUESTION_IDS_BY_JOB[jobKey] || [])];
+}
+
 function validateApplication(body, dossier, jobKey, files = []) {
-  const required = ["fullName", "age", "city", "province", "institution", "email", "phone", "motivation", "fit", "schoolPitch", "challenge", "communication", "availability"];
+  if (!jobKey) throw new Error("Cargo não identificado.");
+  if (!QUESTION_IDS_BY_JOB[jobKey]) throw new Error("Cargo inválido.");
+  const required = ["fullName", "age", "city", "province", "institution", "email", "phone", ...getRequiredQuestionIds(jobKey)];
   required.forEach((field) => {
     if (!String(body[field] || "").trim()) throw new Error(`Campo obrigatório em falta: ${field}`);
   });
-  if (!jobKey) throw new Error("Cargo não identificado.");
+  const allowedQuestionIds = new Set(getRequiredQuestionIds(jobKey));
+  ALL_QUESTION_IDS.forEach((field) => {
+    if (!allowedQuestionIds.has(field) && String(body[field] || "").trim()) {
+      throw new Error(`Pergunta não aplicável a este cargo: ${field}`);
+    }
+  });
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(body.email))) throw new Error("E-mail inválido.");
   if (!/^9\d{8}$/.test(String(body.phone))) throw new Error("Telefone inválido.");
   if (Number(body.age) < 14 || Number(body.age) > 35) throw new Error("Idade fora do intervalo permitido.");
-  if (dossier.job?.requiresLuanda && body.luandaAvailability !== "Sim") {
+  if (LUANDA_REQUIRED_JOB_IDS.has(jobKey) && body.luandaAvailability !== "Sim") {
     throw new Error("Este cargo exige disponibilidade presencial em Luanda.");
+  }
+  if (!LUANDA_REQUIRED_JOB_IDS.has(jobKey) && String(body.luandaAvailability || "").trim()) {
+    throw new Error("Disponibilidade presencial em Luanda não se aplica a este cargo.");
   }
   const requiredDocs = Array.isArray(dossier.documents) ? dossier.documents.filter((doc) => doc.required) : [];
   const uploadedDocIds = new Set(files.map((file) => file.fieldname.replace(/^document_/, "")));
@@ -293,15 +415,28 @@ function validateApplication(body, dossier, jobKey, files = []) {
   });
 }
 
-function pickApplicationData(body) {
-  const keys = ["fullName", "age", "city", "province", "institution", "email", "phone", "linkedin", "socials", "motivation", "fit", "schoolPitch", "challenge", "communication", "availability", "luandaAvailability"];
+function pickApplicationData(body, jobKey) {
+  const keys = ["fullName", "age", "city", "province", "institution", "email", "phone", "linkedin", "socials", ...getRequiredQuestionIds(jobKey), "luandaAvailability"];
   return Object.fromEntries(keys.map((key) => [key, String(body[key] || "").trim()]));
 }
 
-function buildAnswerRows(body) {
-  return Object.entries(pickApplicationData(body)).map(([label, answer]) => ({ label, answer: answer || "Não informado" }));
+function buildAnswerRows(body, jobKey) {
+  const data = pickApplicationData(body, jobKey);
+  const baseRows = [
+    ["Nome completo", data.fullName],
+    ["Idade", data.age],
+    ["Cidade", data.city],
+    ["Província", data.province],
+    ["Escola / Universidade / Profissão", data.institution],
+    ["E-mail", data.email],
+    ["Telefone", data.phone],
+    ["LinkedIn", data.linkedin || "Não informado"],
+    ["Redes sociais", data.socials || "Não informado"]
+  ];
+  const questionRows = getRequiredQuestionIds(jobKey).map((id) => [QUESTION_LABELS[id] || id, data[id]]);
+  if (data.luandaAvailability) questionRows.push(["Disponibilidade presencial em Luanda", data.luandaAvailability]);
+  return [...baseRows, ...questionRows].map(([label, answer]) => ({ label, answer: answer || "Não informado" }));
 }
-
 function getRoutingForJob(jobKey) {
   const ids = [
     ...ROUTING_CONFIG.globalRecipients,
@@ -351,7 +486,7 @@ async function saveDocuments(applicationId, files, dossierDocuments = []) {
     const originalName = sanitizeFileName(file.originalname);
     const extension = getExtension(originalName);
     if (!allowedExtensions.has(extension) || !allowedMimeTypes.has(file.mimetype)) {
-      throw new Error(`Documento inválido: ${originalName}`);
+      throw new Error(`Documento invÃ¡lido: ${originalName}`);
     }
     const storedName = `${docId}-${crypto.randomBytes(12).toString("hex")}.${extension}`;
     const relativePath = `documents/${storedName}`;
@@ -376,7 +511,7 @@ async function generatePdf(record) {
   await writeStoredFile(record.id, pdfName, buffer, "application/pdf");
   return {
     id: "dossierPdf",
-    name: "PDF/dossiê da candidatura",
+    name: "PDF/dossiÃª da candidatura",
     originalName: pdfName,
     fileName: pdfName,
     relativePath: pdfName,
@@ -393,7 +528,7 @@ function createPdfBuffer(record) {
     doc.on("end", () => resolve(Buffer.concat(chunks)));
     doc.on("error", reject);
     doc.fontSize(18).text(ORGANIZATION_NAME, { align: "center" });
-    doc.moveDown(0.4).fontSize(14).text("Dossiê profissional da candidatura", { align: "center" });
+    doc.moveDown(0.4).fontSize(14).text("DossiÃª profissional da candidatura", { align: "center" });
     doc.moveDown();
     doc.fontSize(11).text(`ID: ${record.id}`);
     doc.text(`Cargo: ${record.job.title}`);
@@ -402,7 +537,7 @@ function createPdfBuffer(record) {
     doc.moveDown();
     record.answers.forEach((row) => {
       doc.font("Helvetica-Bold").text(`${row.label}:`);
-      doc.font("Helvetica").text(String(row.answer || "Não informado"));
+      doc.font("Helvetica").text(String(row.answer || "NÃ£o informado"));
       doc.moveDown(0.45);
     });
     doc.addPage();
@@ -412,7 +547,7 @@ function createPdfBuffer(record) {
       doc.fontSize(11).text(`${file.name}: ${file.originalName} (${formatBytes(file.size)})`);
     });
     doc.moveDown();
-    doc.text(`Destinatários: ${record.routing.recipientEmails.join(", ")}`);
+    doc.text(`DestinatÃ¡rios: ${record.routing.recipientEmails.join(", ")}`);
     doc.end();
   });
 }
@@ -420,7 +555,7 @@ function createPdfBuffer(record) {
 async function sendApplicationEmail(record) {
   try {
     const transporter = createTransporter();
-    if (!transporter) throw new Error("SMTP não configurado. Defina SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD e EMAIL_FROM.");
+    if (!transporter) throw new Error("SMTP nÃ£o configurado. Defina SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD e EMAIL_FROM.");
     const html = buildEmailHtml(withDownloadLinks(record));
     const text = buildEmailText(record);
     await transporter.sendMail({
@@ -439,9 +574,9 @@ async function sendApplicationEmail(record) {
 async function sendSmtpTestEmail() {
   try {
     const to = process.env.EMAIL_JOAO_PEDRO;
-    if (!to) throw new Error("EMAIL_JOAO_PEDRO não configurado.");
+    if (!to) throw new Error("EMAIL_JOAO_PEDRO nÃ£o configurado.");
     const transporter = createTransporter();
-    if (!transporter) throw new Error("SMTP não configurado. Defina SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD e EMAIL_FROM.");
+    if (!transporter) throw new Error("SMTP nÃ£o configurado. Defina SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD e EMAIL_FROM.");
     const info = await transporter.sendMail({
       from: process.env.EMAIL_FROM,
       to,
@@ -484,7 +619,7 @@ function buildEmailHtml(record) {
   const rows = record.answers.map((row) => `
     <tr>
       <th style="text-align:left;border:1px solid #d8dee9;padding:8px;background:#f6f8fb;width:32%;">${escapeHtml(row.label)}</th>
-      <td style="border:1px solid #d8dee9;padding:8px;">${escapeHtml(row.answer || "Não informado").replaceAll("\n", "<br>")}</td>
+      <td style="border:1px solid #d8dee9;padding:8px;">${escapeHtml(row.answer || "NÃ£o informado").replaceAll("\n", "<br>")}</td>
     </tr>
   `).join("");
   const docs = [...record.documents, record.pdf].filter(Boolean).map((file) => `
@@ -498,14 +633,14 @@ function buildEmailHtml(record) {
       <h3>DOCUMENTOS DA CANDIDATURA</h3>
       <ul>${docs}</ul>
       <p><strong>Data e hora da candidatura:</strong> ${escapeHtml(record.submittedAtDisplay)}</p>
-      <p><strong>Destinatários:</strong> ${escapeHtml(record.routing.recipientEmails.join(", "))}</p>
+      <p><strong>DestinatÃ¡rios:</strong> ${escapeHtml(record.routing.recipientEmails.join(", "))}</p>
     </div>
   `;
 }
 
 function buildEmailText(record) {
-  const rows = record.answers.map((row) => `${row.label}: ${row.answer || "Não informado"}`).join("\n");
-  return `${ORGANIZATION_NAME}\nNova candidatura - ${record.job.title}\n\n${rows}\n\nDocumentos disponíveis por links seguros no e-mail HTML.\nData: ${record.submittedAtDisplay}`;
+  const rows = record.answers.map((row) => `${row.label}: ${row.answer || "NÃ£o informado"}`).join("\n");
+  return `${ORGANIZATION_NAME}\nNova candidatura - ${record.job.title}\n\n${rows}\n\nDocumentos disponÃ­veis por links seguros no e-mail HTML.\nData: ${record.submittedAtDisplay}`;
 }
 
 function signDownloadToken(applicationId, fileId, minutes = 10080) {
@@ -682,7 +817,7 @@ function safeApplicationId(id) {
 }
 
 function requireAdmin(req, res, next) {
-  if (!ADMIN_TOKEN) return res.status(503).json({ error: "ADMIN_TOKEN não configurado no servidor." });
+  if (!ADMIN_TOKEN) return res.status(503).json({ error: "ADMIN_TOKEN nÃ£o configurado no servidor." });
   const token = req.get("X-Admin-Token");
   if (token !== ADMIN_TOKEN) return res.status(401).json({ error: "Acesso administrativo negado." });
   next();
@@ -701,3 +836,4 @@ function formatBytes(bytes = 0) {
   if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
+
