@@ -378,9 +378,7 @@ const QUESTION_LABELS = {
   informationManagement: "Como garantiria boa gestão de informação interna e atenção ao detalhe?",
   taskFollowUp: "Como acompanharia tarefas pendentes para garantir que nada fica esquecido?"
 };
-const LEGACY_QUESTION_IDS = ["schoolPitch", "challenge", "communication"];
 const LUANDA_REQUIRED_JOB_IDS = new Set(["designer", "redator", "fotografo", "videografo", "eventos"]);
-const ALL_QUESTION_IDS = [...new Set([...COMMON_QUESTION_IDS, ...Object.values(QUESTION_IDS_BY_JOB).flat(), ...LEGACY_QUESTION_IDS])];
 
 function getRequiredQuestionIds(jobKey) {
   return [...COMMON_QUESTION_IDS, ...(QUESTION_IDS_BY_JOB[jobKey] || [])];
@@ -392,12 +390,6 @@ function validateApplication(body, dossier, jobKey, files = []) {
   const required = ["fullName", "age", "city", "province", "institution", "email", "phone", ...getRequiredQuestionIds(jobKey)];
   required.forEach((field) => {
     if (!String(body[field] || "").trim()) throw new Error(`Campo obrigatório em falta: ${field}`);
-  });
-  const allowedQuestionIds = new Set(getRequiredQuestionIds(jobKey));
-  ALL_QUESTION_IDS.forEach((field) => {
-    if (!allowedQuestionIds.has(field) && String(body[field] || "").trim()) {
-      throw new Error(`Pergunta não aplicável a este cargo: ${field}`);
-    }
   });
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(body.email))) throw new Error("E-mail inválido.");
   if (!/^9\d{8}$/.test(String(body.phone))) throw new Error("Telefone inválido.");
